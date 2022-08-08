@@ -1,0 +1,124 @@
+---
+title: "Stats C183 HW 1"
+author: "Charles Liu (304804942)"
+date: "4/11/2020"
+output: pdf_document
+---
+
+# Loading Necessary Packages/Data:
+```{r}
+library(readr)
+a <- read.csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Spring 2020/Stats C183/Project/stockData.csv", sep=",", header=TRUE)
+```
+
+
+
+# Create Returns and Matrices:
+```{r}
+# Convert adjusted close prices into returns:
+r <- (a[-1,3:ncol(a)]-a[-nrow(a),3:ncol(a)])/a[-nrow(a),3:ncol(a)]
+
+# Compute mean vector:
+means <- colMeans(r[-1]) # Without ^GSPC
+
+# Compute variance covariance matrix:
+covmat <- cov(r[-1]) # Without ^GSPC
+
+# Compute correlation matrix:
+cormat <- cor(r[-1]) # Without ^GSPC
+
+# Compute the vector of variances:
+variances <- diag(covmat)
+
+# Compute the vector of standard deviations:
+stdev <- diag(covmat)^.5
+```
+
+
+
+# Exercise 1:
+## 1a)
+```{r, warning = FALSE}
+# Set up column of Ones, A - E formulas, & both Lagranges:
+ones <- rep(1, 30)
+A <- t(ones) %*% solve(covmat) %*% means
+B <- t(means) %*% solve(covmat) %*% means
+C <- t(ones) %*% solve(covmat) %*% ones
+D <- B * C - A^2
+E <- seq(-5,5,.1)
+Lagrange_1 <- ((C * E) - A)/D
+Lagrange_2 <- (B - (A * E))/D
+
+# Values for our formulas:
+Exc_1a <- matrix(c(A, B, C, D), byrow = TRUE)
+rownames(Exc_1a) <- c("A:", "B:", "C:", "D:")
+Exc_1a
+Lagrange_1
+Lagrange_2
+```
+
+
+## 1b)
+```{r, warning = FALSE}
+E <- seq(-5,5,.1) # Choosing arbitrary E values.
+
+# Efficient Frontier Formulas:
+minvar <- 1/C
+minE <- A/C
+
+# Efficient Frontier Values:
+minvar
+minE
+```
+
+
+## 1c)
+```{r, warning = FALSE}
+plot(0, A/C, main = "Portfolio possibilities curve
+     (The Frontier)", xlab = "Risk (standard deviation)",
+     ylab = "Expected Return", type = "n",
+     xlim = c(-2*sqrt(1/C), 4*sqrt(1/C)), 
+     ylim = c(-2*A/C, 4*A/C))
+points(0, A/C, pch = 19) # Plot center of the hyperbola
+abline(v = 0) # Plot transverse and conjugate axes. Also this is the y-axis.
+abline(h = A/C)
+abline(h = 0) # Plot the x-axis
+points(sqrt(1/C), A/C, pch=19) # Plot the minimum risk portfolio
+V <- seq(-1, 1, 0.001) # Find the asymptotes
+A1 <- A/C + V * sqrt(D/C)
+A2 <- A/C - V * sqrt(D/C)
+points(V, A1, type = "l")
+points(V, A2, type = "l")
+
+
+sdeff <- seq((minvar)^0.5, 1, by = 0.0001)
+options(warn = -1)
+y1 <- (A + sqrt(D*(C*sdeff^2 - 1)))*(1/C) 
+y2 <- (A - sqrt(D*(C*sdeff^2 - 1)))*(1/C) 
+options(warn = 0)
+points(sdeff, y1, type = "l")
+points(sdeff, y2, type = "l")
+```
+
+
+
+# Exercise 3:
+```{r}
+R_bar <- matrix(c(0.005174, 0.010617, 0.016947))
+var_cov <- diag(c(0.010025, 0.002123, 0.005775), 3, 3)
+ones <- rep(1, 3)
+
+R_bar_min <- (t(ones) %*% solve(var_cov) %*% R_bar)/(t(ones) %*% solve(var_cov) %*% ones)
+sigma_min <- (1)/((t(ones) %*% solve(var_cov) %*% ones)^1/2)
+
+X_numer <- solve(var_cov) %*% ones
+X_denom <- t(ones) %*% solve(var_cov) %*% ones
+# X_denom = 743.9424
+X_vec <- X_numer/743.9424
+rownames(X_vec) <- c("C", "XOM", "AAPL")
+
+# Composition of the Minimum Risk Portfolio:
+X_vec
+R_bar_min
+sigma_min
+```

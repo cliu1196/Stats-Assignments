@@ -1,0 +1,47 @@
+---
+title: "stats_c183_hw2_Charles_Liu"
+author: "Charles Liu (304804942)"
+date: "4/23/2020"
+output: pdf_document
+---
+
+# Setting up for Problem 4:
+```{r}
+inverse_Q <- matrix(c(166.21139, -22.40241, -22.40241, 220.41076), nrow = 2, ncol = 2)
+inverse_Q  # solve(Q) = inverse of Covmat of Q
+ones <- rep(1, 2)
+```
+
+
+## 4a)
+```{r}
+X_numerator <- inverse_Q %*% ones
+X_denominator <- t(ones) %*% inverse_Q %*% ones # = 341.8173
+X <- X_numerator/341.8173
+
+# Composition of Minimum Risk Portfolio:
+X
+```
+
+
+## 4b)
+```{r}
+sigma_min <- 0.05408825
+R_bar_min <- 0.01315856
+R_bar_B <- 0.01219724
+R_f <- 0.011
+
+
+R_B <- R_bar_min - (R_f * ones)
+X_B_numerator <- inverse_Q %*% R_B
+X_B_denominator <- t(ones) %*% inverse_Q %*% R_B # = 0.7378332
+X_B <- X_B_numerator/0.7378332
+
+# Composition of Portfolio B in terms of Portfolio A and Risk Free Asset:
+X_B
+```
+
+
+
+## 4c)
+Given this level of risk (0.03), you can do better for Expected Returns for Portfolio B becasuse any portfolio on the Capital Allocation Line (CAL) will yield a higher return for the same amount of risk. The CAL is just above the Minimum Risk Portfolio and attached to the Point of Tangency (G) for the Risk Free Asset. Essentially, yes you can do better Expected Returns for a lower amount of risk (i.e. #4b has risk of 0.01219724). 

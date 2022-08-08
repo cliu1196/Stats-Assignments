@@ -1,0 +1,57 @@
+---
+title: "Stats_c183_HW5_Charles_Liu"
+author: "Charles Liu (304804942)"
+date: "6/3/2020"
+output: pdf_document
+---
+
+
+# Load Necessary Packages:
+```{r}
+library(readr)
+```
+
+
+
+# 1b)
+```{r}
+epsilon <- c(0,rnorm(52))
+S <- c(50,rep(0,52)) # S_0 = $50 & 52 weeks
+DS <- rep(0,53)
+
+for(i in(1:52)) {
+  DS[i+1] <- 0.0020*S[i] + 0.025*S[i]*epsilon[i+1]
+  S[i+1] = S[i] + DS[i+1]
+}
+
+x <- seq(0,52)
+xx <- as.data.frame(cbind(x, epsilon, DS, S))
+
+# Plot using 52 weeks
+plot(x, S, type="l", xlab="Periods (52 Weeks)", ylab="Stock price")
+points(x,S)
+```
+
+
+
+# 6)
+```{r,warning=FALSE, message=FALSE}
+a <- read.csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Spring 2020/Stats C183/Homeworks/HW 5/AAPL.csv", sep=",", header=TRUE)
+
+# Calculate it by hand
+n <- nrow(a)
+p <- a[,3]
+temp <- p/p[-1]
+u <- log(temp)
+b <- 1/(n-1)
+c <- sum(u^2)
+d <- sum(u)
+s <-(b*(c - (d^2/n)))
+trade_days <- 365 - n
+sigma_hat <- sqrt(trade_days) * s
+
+# Value of annual volatility estimation: 
+sigma_hat
+
+# Therefore the annual volatility is sigma = 3/rate(%)
+```
