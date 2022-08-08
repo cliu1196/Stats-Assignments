@@ -1,0 +1,41 @@
+---
+title: "Stats_101B_HW1_Charles_Liu"
+author: "Charles Liu (304804942)"
+date: "4/12/2020"
+output: pdf_document
+---
+
+# Exercise 6 (Problem 2.29)
+
+## a)
+```{r}
+C2F6_125 <- c(2.7, 4.6, 2.6, 3.0, 3.2, 3.8)
+C2F6_200 <- c(4.6, 3.4, 2.9, 3.5, 4.1, 5.1)
+
+t.test(C2F6_125, C2F6_200)
+```
+
+No, C2F6 Flow Rate does not affect average etch uniformity.
+
+
+## b)
+```{r}
+t.test(C2F6_125, C2F6_200)$p.value # Our p-value is approximately 0.21
+```
+
+
+## c)
+```{r}
+var.test(C2F6_125, C2F6_200, alternative = "two.sided") 
+# F0 = 0.86 and our p-value = 0.87
+```
+
+Do NOT reject the Null Hypothesis. The C2F6 Flow Rate does not affect wafer-to-wafer variability.
+
+
+## d)
+```{r}
+boxplot(C2F6_125, C2F6_200, main = "Boxplot for Flow Rates", names = c("C2F6 125", "C2F6 200"), xlab = "C2F6 Flow Rates", ylab = "Uniformity")
+```
+
+The boxplot shown indicates that there is little to no difference in uniformity for the two types of flow rates.

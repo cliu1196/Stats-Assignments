@@ -1,0 +1,136 @@
+---
+title: "Stats_101B_HW_4_Charles_Liu"
+author: "Charles Liu (304804942)"
+date: "5/18/2020"
+output: pdf_document
+---
+
+# Loading Necessary Packages
+```{r, message=FALSE}
+library(DoE.base)
+library(unrepx)
+library(gplots)
+library(ggplot2)
+```
+
+
+
+# 1a) (Problem 6.22a)
+Analyze the data from this experiment. Which factors significantly affect the customer response rate?
+```{r}
+# Responses
+response1 <- c(50,44,46,42,49,48,47,56,
+               54,42,48,43,46,45,48,54)
+
+# Contrasts
+k=3
+contrast_single1 <- contr.FrF2(2^(k))
+colnames(contrast_single1) <- c("A", "B","AB", "C", "AC","BC","ABC")
+contrast_single1
+
+# Design
+contrast1 = rbind(contrast_single1,contrast_single1)
+design1 <- contrast1[,2^(0:(k-1))]
+design1
+
+# Effects
+df1 <- data.frame(contrast1,response1)
+effect1 <- t(response1)%*%contrast1/(4*2) # 2 replicates
+effect1
+```
+
+We can see from here that (A) and (C) Main Effects are significant to the customer responses. We also see that the Interaction Effects of (AB), (AC), and (BC) are also significant to the customer responses. For the Main Effect (A), it has a negative relation with the responses; this suggests that increasing the class from 3rd to 1st will decrease the customer responses. For the Main Effect (C), it has a positive relation with the responses; this suggests that increasing (C) from the low level (19.95) to the high level (24.95) will increase the customer responses.
+
+
+# 1b) (Problem 6.22b)
+Analyze the residuals from this experiment. Are there any indications of model inadequacy?
+```{r}
+anova1 <- aov(response1~factor(A)*factor(B)*factor(C),data=df1)
+summary(anova1)
+
+regression1 <- lm(response1 ~ A*B*C, data=df1)
+summary(regression1)
+
+par(mfrow = c(2,2))
+plot(regression1)
+```
+
+We can see here that the model has Multiple R-squared = 0.911 and Adjusted R-squared = 0.8332. This an indicators that our model is good. From our plots, we can see that it satisfies the Normality Assumption relatively so. As for the Residuals plot, the red dotted line is perfectly straight and no patterns from the scattered points, therefore we can same our model has no inadequacy. The Linearity Assumption is satisfied. Although, we can see the Homoscedasticity Assumption is not satisfied as we can see from the Scale-Location Plot.
+
+
+# 1c) (Problem 6.22c)
+What would you recommend to the company?  
+
+**Answer:** I would recommend the company should use 1st Class Mail, with Colored Brochures, and offer price of $24.95 to maximize the average response rate.
+
+
+
+# 2a) (Problem 6.17a)
+Construct a normal probability plot of these effects.
+```{r}
+# Effects
+effect2 <- c(76.95,-67.52,-7.84,-18.73,
+             -51.32,11.69,9.78,20.78,14.74,1.27,
+             -2.82,-6.50,10.20,-7.98,-6.25)
+names(effect2) <- c("A","B","C","D","AB","AC","AD","BC","BD","CD","ABC",
+                    "ABD","ACD","BCD","ABCD")
+effect2
+
+# Normality Probability Plot
+qqnorm(effect2) 
+text(qqnorm(effect2)$x + 0.05,qqnorm(effect2)$y + 0.05, names(effect2))
+qqline(effect2)
+```
+
+We can see here that the Normality Probability Plot is relatively normal, and therefore, it satisfies the Normality Assumption.
+
+
+# 2b) (Problem 6.17b)
+Identify a tenative model, based on the plot of the effects in part (a).  
+**Answer:**
+$$\hat{y} = Intercept + 38.475{x_a} - 33.76{x_b} - 25.66{x_a \ x_b}$$
+
+
+# 2c) (Problem 6.17c)
+(c) Identify the significant effects through constructing 95% confidence intervals. Do this first:  
+(i) if it is reasonable to assume that the interactions involving three or more factors are negligible, and then  
+(ii) using Lenth’s method.
+```{r}
+# (i) Assume that interactions involving 3 or more factors are negligible
+# (ii) Use Lenth's Method
+
+# The estimate of tau (by hand)
+effect_abs2 <- abs(effect2)
+tau2 <- 1.5*median(effect_abs2)
+tau2
+
+# Trucated effect (by hand)
+trucated_effect_abs2 <- effect_abs2[effect_abs2<(2.5*tau2)]
+tau_tilde2.1 <- 1.5*median(trucated_effect_abs2)
+tau_tilde2.1
+
+# Trucated effect (by R function)
+tau_tilde2.2 <- PSE(effect2, method = "Lenth")
+tau_tilde2.2 # This is the same exact value found by doing it "by hand"
+
+### T-tests and C.I.
+t_value_lenth2 <- round(qt((1-0.025),5),3)
+t_value_lenth2
+
+## t-tests
+t_tests2 <- eff.test(effect2, method = "Lenth")
+t_tests2[,-5]
+
+## 95% CIs
+names_effects2 <- c("A","B","C","D","AB","AC","AD","BC","BD","CD","ABC",
+                    "ABD","ACD","BCD","ABCD")
+ci2 <- cbind(t(effect2-t_value_lenth2*tau_tilde2.2),t(effect2+t_value_lenth2*tau_tilde2.2))
+ci2 <- matrix(c(names_effects2,ci2), nrow=15, ncol=3, byrow=FALSE)
+ci2
+
+# The significant factor from C.I.'s
+significant_ci2 <- (ci2[,1])[c(which(ci2[,2]>0), which(ci2[,3]<0))]
+significant_ci2
+```
+
+(i) It is reasonable to assume that the interactions involving three or more factors are negligible. Therefore, we need to use (ii) Lenth’s method. We also see that the Effects (A), (B), and (AB) are significant.

@@ -1,0 +1,87 @@
+# Stats 101B HW 2
+# Loading Packages & Creating Data for Problem 2:
+require(Hmisc)
+require(DescTools)
+observations <- c(24, 28, 37, 30,
+                  37, 44, 31, 35,
+                  42, 47, 52, 38)
+dosages <- c(rep("20g", 4), rep("30g", 4), rep("40g", 4))
+drug.data <- data.frame(dosages = dosages, observations = observations)
+drug.data
+
+
+# Problem 2:
+## 2b)
+summary(observations ~ dosages, data = drug.data)
+
+m1 <- lm(observations ~ dosages, data = drug.data)
+summary(m1)
+aov(m1)
+anova(m1)
+
+
+## 2e)
+MSE_2 <- 32.028
+qtukey(1 - 0.05, 3, 12 - 3)/(sqrt(2))
+tstat <-(mean(observations[dosages == "30g"]) - 
+           mean(observations[dosages == "20g"]))/sqrt(2*MSE_2/4)
+tstat # H_0: M_1 = M_2
+1-ptukey(tstat*sqrt(2),3, 12-3) # p-value
+TukeyHSD(x= aov(m1), 'dosages', conf.level = 0.95)
+# We fail to REJECT the NUll Hypothesis and we can say they are NOT significantly different for the means.
+
+
+## 2f)
+res_2 <- m1$residual
+fitted_2 <- m1$fitted.values
+par(mfrow = c(1, 2))
+# normality check
+qqnorm(res_2); qqline(res_2)
+# no pattern / constant variance check
+plot(fitted_2, res_2)
+
+
+
+# Loading Packages & Creating Data for Problem 3:
+conductivity <- c(143, 141, 150, 146,
+                  152, 149, 137, 143,
+                  134, 136, 132, 127,
+                  129, 127, 132, 129)
+coating_type <- c(rep("1", 4), rep("2", 4), rep("3", 4), rep("4", 4))
+tv.data <- data.frame(coating_type = coating_type, conductivity = conductivity)
+tv.data
+
+
+# Problem 3:
+## 3b)
+summary(conductivity ~ coating_type, data = tv.data)
+m2 <- lm(conductivity ~ coating_type, data = tv.data)
+summary(m2)
+aov(m2)
+anova(m2)
+
+
+## 3d)
+MSE_3 <- 19.6875 # from the ANOVA table
+mean(conductivity[coating_type == "1"]) - 
+  mean(conductivity[coating_type == "4"]) + 
+  qt(1 - 0.005, 16 - 4)*sqrt(2*MSE_3/4)
+
+mean(conductivity[coating_type == "1"]) - 
+  mean(conductivity[coating_type == "4"]) - 
+  qt(1 - 0.005, 16 - 4)*sqrt(2*MSE_3/4)
+
+
+## 3e)
+TukeyHSD(x= aov(m2), 'coating_type', conf.level = 0.95)
+# We fail to REJECT the NUll Hypothesis and we can say they are NOT significantly different for the means.
+
+
+## 3f)
+res_3 <- m2$residual
+fitted_3 <- m2$fitted.values
+par(mfrow = c(1, 2))
+# normality check
+qqnorm(res_3); qqline(res_3)
+# no pattern / constant variance check
+plot(fitted_3, res_3)
