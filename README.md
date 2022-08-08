@@ -2,7 +2,7 @@
 All assignments from UCLA Stats courses.
 
   1) Stats 10 (Introduction to Statistical Reasoning)
-    i) something
+    - something
   3) Stats 20 (Introduction to Statistical Programming with R)
   4) Stats 21 (Introduction to Python)
   5) Stats 100A (Introduction to Probability)
