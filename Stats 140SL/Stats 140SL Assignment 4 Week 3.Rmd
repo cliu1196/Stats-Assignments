@@ -1,0 +1,113 @@
+---
+title: "Stats 140SL Assignment 4 Week 3"
+author: "Team Members: Kim Jin, Charles Liu, Zoe Wang, Amarissa Mases, Wendy Kha, Jinah Weon"
+date: "1/28/2021"
+output: pdf_document
+---
+
+# Statement of Problem
+The Coronavirus 2019 disease pandemic has caused an immense crisis in both health and the economy. From the spread of the infection, the pandemic has impacted people's lives, pushing hospital systems to their capacities, and has created economic deterioration.  
+
+How has the COVID19 pandemic and (its) politics effected the U.S. economy?
+
+
+
+# Formal Statistical Hypothesis
+The opinion (belief) that "red" states have conferred vulnerability to death by COVID-19 among their populations.
+
+
+
+# Analysis (bivariate is perfectly acceptable)
+
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+## Loading Necessary Packages
+library(readr)
+
+## Loading Data
+setwd(getwd())
+covid_deaths <- read_csv("EconomicTracker-main/data/COVID - State - Daily.csv")
+## Edit Data to remove "."
+covid_deaths$death_number <- ifelse(covid_deaths$death_count == ".",
+                                    0, covid_deaths$death_count)
+# Create it as numeric values
+covid_deaths$num_death_number <- as.numeric(covid_deaths$death_number)
+
+# Amarissa's Code
+red_states <- c(1, 2, 5, 12, 16, 18, 19, 20, 21, 22, 28, 29, 30, 31, 37,38, 39, 40, 45, 46, 47, 48, 49, 54, 56) #fips of all states whose popular vote 
+covid_deaths$pol_aff <- "blue" #start off with all states as blue
+covid_deaths$pol_aff <- ifelse(covid_deaths$statefips %in% red_states, "red", covid_deaths$pol_aff)
+# table(covid_deaths$statefips, covid_deaths$pol_aff) #you can check that states were correctly categorized here
+covid_deaths$pol_aff <- factor(covid_deaths$pol_aff)
+
+# Death Rate
+covid_deaths$death_perct <- ifelse(covid_deaths$death_rate == ".",
+                                    0, covid_deaths$death_rate)
+covid_deaths$death_perct <- as.numeric(covid_deaths$death_perct)
+
+# New Death Rate
+covid_deaths$new_death_perct <- ifelse(covid_deaths$new_death_rate == ".",
+                                    0, covid_deaths$new_death_rate)
+covid_deaths$new_death_perct <- as.numeric(covid_deaths$new_death_perct)
+
+# New Death Count
+covid_deaths$new_death_num <- ifelse(covid_deaths$new_death_count == ".",
+                                    0, covid_deaths$new_death_count)
+covid_deaths$new_death_num <- as.numeric(covid_deaths$new_death_num)
+```
+
+```{r}
+# Death Count w/ StateFIP Codes
+fit1 <- lm(covid_deaths$num_death_number ~ covid_deaths$statefips, 
+          data = covid_deaths)
+
+### All below are blue and red variables
+
+# Death Count
+fit2 <- lm(covid_deaths$num_death_number ~ covid_deaths$pol_aff, data = covid_deaths)
+
+# Death Rate
+fit3 <- lm(covid_deaths$death_perct ~ covid_deaths$pol_aff, 
+          data = covid_deaths)
+
+# New Death Rate
+fit4 <- lm(covid_deaths$new_death_perct ~ covid_deaths$pol_aff, 
+          data = covid_deaths)
+
+# New Death Count
+fit5 <- lm(covid_deaths$new_death_num ~ covid_deaths$pol_aff, 
+          data = covid_deaths)
+
+r1 <- summary(fit1)$r.squared
+r2 <- summary(fit2)$r.squared
+r3 <- summary(fit3)$r.squared
+r4 <- summary(fit4)$r.squared
+r5 <- summary(fit5)$r.squared
+
+mtx <- matrix(c(r1,r2,r3,r4,r5))
+colnames(mtx) <- "R-Squared Values"
+rownames(mtx) <- c("r1","r2","r3","r4","r5")
+mtx
+```
+
+
+
+# Conclusion
+"type here"
+
+
+
+# Limitations of the Analysis
+One of the limitation of analyzing COVID-19 data would be uncertainty in the number of cases (e.g. mortality figure might include only deaths occur in hospitals(not other locations such as home).
+
+
+
+# Contributions
+"type here"
+
+
+
+
+
+
+

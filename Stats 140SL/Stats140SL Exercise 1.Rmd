@@ -1,0 +1,88 @@
+---
+title: "W2Exercise1"
+author: "Charles Liu"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Using any built-in dataset (if necessary), please modify this .Rmd document and have these features present in your knitted result:
+
+1.  Sections (e.g., Introduction, Data, Methods, Results, Conclusion)
+2.  An R chunk
+3.  An R graphic (e.g., like ggplot output)
+4.  An external graphic
+5. (challenge 1)  Change the default font
+6. (challenge 2)  Add some symbols, like a bit of calculus or something like currency symbols (e.g., Yen, Pound sterling)
+
+When you are done, please return to the main room.  If you don't finish, don't fret, we can talk about what happened.
+
+
+# Loading Necessary Package(s)
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+```
+
+
+
+# 1. Sections
+
+## A) Introduction
+This section talks about the introduction of the problem.
+
+## B) Data
+```{r}
+data(mtcars) # Load the data
+```
+
+## C) Methods
+This section talks about the methods used.
+
+## D) Results
+This section explains the results found from the data.
+
+
+## E) Conclusion
+This section wraps up the conclusion of the problem and what was analyzed.
+
+
+
+# 2. An R Chunk
+```{r}
+# This right here is a R chunk
+```
+
+
+
+# 3. An R Graphic
+```{r}
+g <- ggplot(mtcars, aes(x=mpg, y=wt))
+g + geom_point() +     
+  ggtitle("Fuel Efficiency Based on Weight") +
+  xlab("Miles per Gallon") + ylab("Weight (in lbs.)") +
+  theme_bw()
+```
+
+
+
+# 4. An external graphic
+![Smiley Face](C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2021/Stats 140SL/Assignments/Assignment 3/image1.png)
+
+
+
+# 5. (challenge 1)  Change the default font
+To change the default font of R, you would go to the *Tools* tab in the top left tabs bar. Under *Tools*, you'll find something called "Global Options..." and enter in here. It'll have a pop-up menu and go to the *Appearance* section. You'll find there that you can change the default font of R under soemthing called "Editor Font".
+
+
+
+# 6. (challenge 2)  Add some symbols, like a bit of calculus or something like currency symbols (e.g., Yen, Pound sterling)
+```{r}
+x <- "\U00B5"
+print(x) # symbol for "mu"
+```
+You would use **unicode symbols** by inserting the correct code used for each symbol, but you would need to make sure to surround the code in quotation marks.
+
+
+
+

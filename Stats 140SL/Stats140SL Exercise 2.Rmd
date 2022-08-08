@@ -1,0 +1,16 @@
+---
+title: "W2Exercise2 (optional)"
+author: "Stat 140SL Winter 2021"
+date: "1/13/2021"
+output: html_document
+---
+
+Please try a little Overleaf.  You might not finish this in class, that's OK, the point is to learn a little bit and to work as a team
+
+1.  Have at least one team member get a project started in Overleaf and share it with the rest of the team.
+
+2.  Please examine https://www.overleaf.com/read/pfdmjpyytyqt specifically "hello_world.tex", copy (download) and paste this to a new file in your team's project.
+
+3.  Try compiling (hope it runs without error - if there is an error, get me to visit your room)
+
+4.  Team Challenge -- can your team take a file like Sweaving.Rtex or betterposterexample.tex and compile it successfully -- you will need to copy a few image files.
