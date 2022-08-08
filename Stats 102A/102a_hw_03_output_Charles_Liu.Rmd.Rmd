@@ -1,0 +1,341 @@
+---
+title: "Stats 102A - Homework 3 - Output File"
+author: "Charles Liu"
+output: pdf_document
+---
+
+Homework questions and prompts copyright Miles Chen, Do not post, share, or distribute without permission.
+
+To receive full credit the functions you write must pass all tests. We may conduct further tests that are not included on this page as well.
+
+Academic Integrity Statement
+
+By including this statement, I, Charles Liu, declare that all of the work in this assignment is my own original work. At no time did I look at the code of other students nor did I search for code solutions online. I understand that plagiarism on any single part of this assignment will result in a 0 for the entire assignment and that I will be referred to the dean of students.
+
+I did discuss ideas related to the homework with Diana Pham for parts 1e and 1c. At no point did I show another student my code, nor did I look at another student's code.
+
+## Part 1. Basic dplyr exercises
+
+Install the package `fueleconomy` and load the dataset `vehicles`. Answer the following questions.
+
+```{r exc2data, error = TRUE, message = FALSE}
+library(fueleconomy) # run install.packages("fueleconomy") if necessary
+# I had to reinstall "tidyverse" since there was a common problem with it and using my pivot_wider() --> https://community.rstudio.com/t/problems-installing-tidyr-dev-version/32340/4
+library(tidyverse) # run install.packages("tidyverse") if necessary
+data(vehicles)
+```
+
+a. How many unique vehicle makers (variable `make`) are included in the dataset? 
+
+```{r}
+# Without nrow(), we will just get the names of the unique vehicles makers, but we want the actual number of unique car makers.
+vehicles %>% 
+  select(make = "make") %>% 
+  distinct(make) %>% 
+  nrow()
+```
+
+b. How many vehicles made in 2014 are represented in the dataset?
+
+```{r}
+# Similar to Q1a
+vehicles %>% 
+  select(year = "year") %>% 
+  filter(year == "2014") %>% 
+  nrow()
+```
+
+c. For the year 2014, what was the average city mpg (gas mileage) for all compact cars? What was the average city mpg for midsize cars in 2014?
+
+```{r}
+# Average City MPG for Compact Cars
+vehicles %>% 
+  filter(year == "2014") %>%  
+  select(class, cty) %>% group_by(class) %>% 
+  filter(class == "Compact Cars") %>% 
+  summarise(Compact_Cars_Avg_City_Mileage = mean(cty, na.rm = TRUE))
+
+# Average City MPG for Midsize Cars
+vehicles %>% 
+  filter(year == "2014") %>%  
+  select(class, cty) %>% group_by(class) %>% 
+  filter(class == "Midsize Cars") %>% 
+  summarise(Midsize_Cars_Avg_City_Mileage = mean(cty, na.rm = TRUE))
+```
+
+d. For the year 2014, compare makers of midsize cars. Find the average city mpg of midsize cars for each manufacturer. For example, in 2014, Acura has 5 midsize cars with an average city mpg of 20.6, while Audi has 12 midsize cars with an average city mpg of 19.08. 
+
+Produce a table showing the city mpg for 2014 midsize cars for the 27 manufacturers represented in the table. Arrange the results in descending order, so that the manufacturer with the highest average mpg will be listed first.
+
+```{r}
+# Similar to Q1c
+vehicles %>% 
+  filter(year == "2014") %>% 
+  select(make, class, cty) %>% 
+  group_by(make) %>% 
+  filter(class == "Midsize Cars") %>% 
+  summarise(Midsize_Cars_Avg_City_Mileage = mean(cty, na.rm = TRUE)) %>%
+  arrange(desc(Midsize_Cars_Avg_City_Mileage))
+```
+
+e. Finally, for the years 1994, 1999, 2004, 2009, and 2014, find the average city mpg of midsize cars for each manufacturer for each year. Use tidyr to transform the resulting output so each manufacturer has one row, and five columns (a column for each year). Print out all the rows of the resulting tibble. You can use `print(tibble, n = 40)` to print 40 rows of a tibble.
+
+```{r}
+Q1e <- (
+vehicles %>% 
+  select(make, class, cty, year) %>% 
+  filter(year == "1994" | year == "1999" | year == "2004" | year == "2009" | year == "2014") %>% 
+  filter(class == "Midsize Cars") %>% 
+  group_by(make, year) %>% 
+  summarise(values = mean(cty, na.rm = TRUE)) %>% 
+  arrange(make)
+)
+
+
+Q1e
+# I need to convert the 2nd and 3rd column into Characters and Doubles, respectively
+
+Q1e[ ,2] <- lapply(Q1e[ ,2], as.character)
+Q1e[ ,3] <- lapply(Q1e[ ,3], as.double)
+
+# Using pivot_wider()
+w <- pivot_wider(Q1e, names_from = "year", values_from = "values")
+
+# Rearranging the Years needed into the correct order. I understand this isn't the most effective way, but the results are still the same.
+
+w_final <- (w %>% select(make, `1994`,`1999`, `2004`, `2009`, `2014`))
+
+print(w_final, n = 40)
+
+#             make     1994     1999     2004     2009     2014
+# 1          Acura       NA 16.50000 17.33333 17.00000 20.60000
+# 2           Audi       NA 15.25000 16.20000 15.83333 19.08333
+```
+
+
+# Part 2. More dplyr
+
+*Make sure your final output shows the desired average number of days between visits.*
+
+```{r dplyr_pt2}
+library(tidyverse)
+load("dr4.Rdata")
+dr4
+# I will be using ifelse() since I just learned how to use it from Stats 101A, and it makes it easier for me to get visit counts if they are not NA and convert it into zero if they are NA entries. It will also help me find the sum of days while taking NA's as zero or taking the actual value of the difference between days.
+# After I created all these columns by mutate(), I need to consolidate and remove columns
+# Remove columns manually or by group_by() & summarise()
+# dr4_prime --> is the original with all the columns
+# dr4a --> done by group_by() & summarise() --> only keeps "id" & "avg_visits"
+# dr4b --> done by manually removing columns with select() --> keeps everything but the dates (i.e. visit1, visit2, etc. columns)
+dr4_prime <-dr4 %>% 
+mutate(diff_days1 = visit2 - visit1) %>% 
+mutate(diff_days2 = visit3 - visit2) %>% 
+mutate(diff_days3 = visit4 - visit3) %>% 
+mutate(diff_days4 = visit5 - visit4) %>%
+mutate(visits = 
+  ifelse(is.na(diff_days1), 0, 1) +
+  ifelse(is.na(diff_days2), 0, 1) +
+  ifelse(is.na(diff_days3), 0, 1) +
+  ifelse(is.na(diff_days4), 0, 1)) %>% 
+mutate(sum_of_days = 
+  ifelse(is.na(diff_days1), 0, diff_days1) +
+  ifelse(is.na(diff_days2), 0, diff_days2) +
+  ifelse(is.na(diff_days3), 0, diff_days3) + 
+  ifelse(is.na(diff_days4), 0, diff_days4)) %>% 
+mutate(avg_visits = sum_of_days/visits)
+
+dr4_prime
+
+
+
+dr4a <- dr4 %>% 
+mutate(diff_days1 = visit2 - visit1) %>% 
+mutate(diff_days2 = visit3 - visit2) %>% 
+mutate(diff_days3 = visit4 - visit3) %>% 
+mutate(diff_days4 = visit5 - visit4) %>%
+mutate(visits = 
+  ifelse(is.na(diff_days1), 0, 1) +
+  ifelse(is.na(diff_days2), 0, 1) +
+  ifelse(is.na(diff_days3), 0, 1) +
+  ifelse(is.na(diff_days4), 0, 1)) %>% 
+mutate(sum_of_days = 
+  ifelse(is.na(diff_days1), 0, diff_days1) +
+  ifelse(is.na(diff_days2), 0, diff_days2) +
+  ifelse(is.na(diff_days3), 0, diff_days3) + 
+  ifelse(is.na(diff_days4), 0, diff_days4)) %>% 
+group_by(id) %>% 
+summarise(avg_visits = sum_of_days/visits)
+
+dr4a
+
+
+
+dr4b <-dr4 %>% 
+mutate(diff_days1 = visit2 - visit1) %>% 
+mutate(diff_days2 = visit3 - visit2) %>% 
+mutate(diff_days3 = visit4 - visit3) %>% 
+mutate(diff_days4 = visit5 - visit4) %>%
+mutate(visits = 
+  ifelse(is.na(diff_days1), 0, 1) +
+  ifelse(is.na(diff_days2), 0, 1) +
+  ifelse(is.na(diff_days3), 0, 1) +
+  ifelse(is.na(diff_days4), 0, 1)) %>% 
+mutate(sum_of_days = 
+  ifelse(is.na(diff_days1), 0, diff_days1) +
+  ifelse(is.na(diff_days2), 0, diff_days2) +
+  ifelse(is.na(diff_days3), 0, diff_days3) + 
+  ifelse(is.na(diff_days4), 0, diff_days4)) %>% 
+mutate(avg_visits = sum_of_days/visits) %>% 
+select(-c(visit1, visit2, visit3, visit4, visit5))
+
+dr4b
+```
+
+# Part 3. Scrape baseball-reference.com with rvest
+
+```{r baseball_rvest, error = TRUE, message = FALSE}
+library(rvest)
+library(stringr)
+library(data.table)
+
+# Test Trial:
+teampage <- html_session("http://www.baseball-reference.com/teams/")
+
+arizona_diamondbacks <- teampage %>% 
+  follow_link("Arizona Diamondbacks") %>% 
+  read_html()
+
+arizona_diamondbacks %>%
+  html_nodes("#franchise_years") %>%
+  html_text()
+# We can continue now
+
+
+# START OUR SESSION! :
+teampage_session <- html_session("http://www.baseball-reference.com/teams/")
+teams <- teampage_session %>% html_nodes("#teams_active .left a") %>% html_text()
+
+baseball_list <- list()
+
+for(i in teams[1:30]) {
+  temp <- teampage_session %>% follow_link(i) %>% read_html()
+  
+  team_names <- temp %>% html_node("#franchise_years") %>% html_table()
+  
+  present_names <- teampage_session %>% 
+    follow_link(i) %>% 
+    read_html() %>% 
+    html_nodes("tr:nth-child(1) td:nth-child(2)") %>% 
+    html_text()
+  
+  n <- length(team_names)
+  df_names <- rep(i, n)
+  
+  baseball_list[[i]] <- data.frame(
+    df_names = team_names,
+    current_names = present_names,
+    stringsAsFactors = FALSE
+  )
+}
+
+baseball_list
+
+
+
+df <- baseball_list[[1]]  # use the first data.frame as a base
+for(i in 1:30){
+  df <- rbind(df, baseball_list[[i]]) # append remaining 
+}
+
+
+baseball <- rbindlist(baseball_list)
+baseball
+```
+
+**Some light text clean up**
+
+```{r baseball_cleanup, error = TRUE, echo = FALSE}
+# you should not need to modify this code, but you will need to run it.
+library(stringr)
+# This code checks to see if text in table has regular space character
+# Because the text from the web uses a non-breaking space, we expect there to be a 
+# mismatch. I'm converting to raw because when displayed on screen, we cannot see 
+# the difference between a regular breaking space and a non-breaking space.
+all.equal(charToRaw(baseball$df_names.Tm[1]), charToRaw("Arizona Diamondbacks"))
+
+# identify which columns are character columns
+char_cols <- which(lapply(baseball, typeof) == "character")
+
+# This loop: for each character column, convert to UTF-8
+# then replace the non-breaking space with a regular space
+for(i in char_cols) {
+    baseball[[i]] <- str_conv(baseball[[i]], "UTF-8")
+    baseball[[i]] <- str_replace_all(baseball[[i]],"\\s"," ")
+}
+
+# We check to see if the conversion worked.
+# If the following returns TRUE, then it worked
+all.equal(charToRaw(baseball$df_names.Tm[1]), charToRaw("Arizona Diamondbacks"))
+```
+
+
+# Part 4. dplyr to summarize the baseball data
+
+
+```{r baseball_dplyr}
+library(dplyr)
+library(tidyverse)
+library(rvest)
+library(stringr)
+
+df_baseball <- baseball %>% 
+  filter(df_names.Year == "2001":"2019") %>% 
+  group_by(current_names, df_names.Year) %>% 
+  mutate(TW = sum(df_names.W, byrow = TRUE)) %>% 
+  mutate(TL = sum(df_names.L, byrow = TRUE)) %>% 
+  mutate(TR = sum(df_names.R, byrow = TRUE)) %>% 
+  mutate(TRA = sum(df_names.RA, byrow = TRUE)) %>% 
+  mutate(TWP = TW/(TW + TL)) %>% 
+  arrange(desc(TWP))
+
+print.data.frame(df_baseball)
+
+# Your final line of code here should print the summary table in the report
+# Be sure to print all rows
+# All requested columns must appear in the html to receive full credit.
+```
+
+# 5. Regular expressions to extract values in the Managers Column
+
+
+```{r baseball_regex}
+library(dplyr)
+library(tidyverse)
+library(rvest)
+library(stringr)
+# RegEx --> [A-Z].[A-Z][a-z]+ will get manager names' that have "." 
+# RegEx --> [0-9]+ is for finding their wins and losses for each manager
+pattern <- "([A-Z].[a-zA-Z][a-zA-Z ][a-zA-Z ]+) \\(([0-9]+)-([0-9]+)\\)"
+
+baseball$df_names.Managers[1]
+
+
+test <- "[A-Za-z].[A-za-z][A-za-z][A-za-z]+"
+baseball$df_names.Managers[1] %>% str_match_all(test)
+
+df_managers <- baseball$df_names.Managers[1] %>% str_match_all(test)
+
+
+
+
+
+# Resume to create the summary table for managers
+# Unable to finish
+
+# managers_summary_table <- df_managers_new %>% group_by(`Manager's_Names`) %>% summarise(Manager_Games = sum(Their_Wins) + sum(Their_Losses), Their_Wins_Final = sum(Their_Wins), Their_Losses_Final = sum(Their_Losses), Their_Wins_Percentage = (Their_Wins_Final)/(Their_Wins_Final + Their_Losses_Final)) %>% arrange(desc(Their_Wins_Final))
+
+# managers_summary_table[1:10, ]
+
+# the summary table in the report
+# All requested columns must appear in the html to receive full credit.
+```
