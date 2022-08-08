@@ -1,0 +1,37 @@
+---
+title: "Stats 101A Kaggle 1st Try"
+author: "Charles Liu"
+date: "January 24, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Stats 101A HW 2
+library(readr)
+test <- read.csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2020/Stats 101A/Homeworks/Kaggle 1st Try/FifaNoY.csv")
+attach(test)
+```
+
+
+```{r}
+m1 <- lm(`Skill Moves` ~ Age + `International Reputation` + `Work Rate` + Positioning, 
+         data = test)
+summary(m1)
+```
+
+
+```{r}
+Nationalitynew <- as.integer(Nationality)
+test <- cbind(test, Nationalitynew)
+WageNew <- predict(m1, test)
+ifelse(is.na(WageNew), mean(WageNew, na.rm = T), WageNew)
+which(is.na(WageNew))
+```
+
+
+```{r}
+
+Ob <- c(1:5462)
+sol <- cbind(Ob, rm.na(WageNew)) 
+write.csv(sol, 'sol.csv', row.names = FALSE)
+```

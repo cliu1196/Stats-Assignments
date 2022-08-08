@@ -1,0 +1,309 @@
+# Stats 101A HW 2
+## on page 116 & 125 for the Textbook
+library(readr)
+library(car)
+library(ggplot2)
+
+### Problem 1
+## 1A)
+airdata <- read.table("airfares.txt", header = TRUE)
+attach(airdata)
+m1a <- lm(Fare ~ Distance)
+summary(m1a)
+par(mfrow = c(2, 2))
+plot(m1a, main = "Model 1")
+
+# Here the intercept is 48.971. Interpretation is if the Distance travelled is 
+# zero also then also the fare is 48.971 and the slope is 0.2196. interpretation is if 
+# the distance is increased by one unit then the fare will be increased by 0.2196 unit.
+
+# We can see that the R-Squared for both Multiple and Adjusted is aprroximately 99.4% 
+# variation of Fare is explained by the Distance. We can therefore say this is a very good
+# model to use numerically.
+
+# The Intercept and Distance have p-values of 1.22e-08 & < 2e-16, respectively. We can 
+# say that they are statistically significant.
+
+# We conclude that we can use Distance to predict Fare. Therefore, we can the critique of
+# the model is correct.
+
+# However, We need to transform variables since it doesn't satisfy the linear assumptions.
+
+
+## 1B)
+# From the scatterplot of Distance that measures Fare, we can see there is a strong 
+# correlation relationship between these two variables. As Distance increases (x-axis),
+# we can see Fare (y-axis) increase along with our Predictor.
+
+# From the residual plot, it shows a non-random pattern. If we apply the log 
+# transformation to the Distance, we can create a better model.
+
+
+
+### Problem 2
+## 2A.1)
+diamdata <- read.table("diamonds.txt", header = TRUE)
+attach(diamdata)
+m2a1 <- lm(Price ~ Size)
+summary(m2a1)
+par(mfrow = c(2, 2))
+plot(m2a1, main = "Model 2A")
+residualPlots(m2a1)
+
+
+## 2A.2)
+# Some weaknesses include that the data it is also seen that the model is not perfectly 
+# linear, thus it may not give an accurate representation of the model. Price can 
+# depend on many things besides Size, and this may lead to some misleading results.
+
+
+## 2B.1)
+m2b1 <- lm(log(Price) ~ log(Size))
+summary(m2b1)
+par(mfrow = c(2, 2))
+plot(m2b1, main = "Model 2B")
+residualPlots(m2b1)
+
+
+## 2B.2)
+# Some weaknesses include that the data after the log transformation has a much lower
+# R-Squared, both Multiple and Adjusted, are slightly lower than Part A's model. 
+# Part B's model has a much more non-random pattern compared to Part A's model. 
+# Another possible weakness is that if this log model is done by hand rather than 
+# using RStudio, it will be much more complicated to find the results. Another weakness
+# is that the data utilizes Price to be predicted by Size. This is not always the best
+# case as there are other factors that could be used to predict Price.
+
+
+## 2C)
+# We see that the the Multiple R-Squared (97.85%) and Adjusted R-Squared (97.8%) for the
+# model Part A is better compared to the model Part B of Multiple R-Squared (97.1%) and 
+# Adjusted R-Squared (97.04%). Part A's model has a better explanation of variation in 
+# its model compared to Part B's model. I used the log transformation for both variables
+# in Part B's model, but it appears Part A's model is better.
+
+
+
+### Problem 3
+## 3a)
+echodata <- read_csv("echo1.csv")
+attach(echodata)
+m3a <- lm(basebp ~ sbp)
+summary(m3a)
+par(mfrow = c(2, 2))
+plot(m3a, main = "Model 3A")
+residualPlots(m3a)
+
+# We can see from the Normal Q-Q plot that it is mostly linear, but not perfectly linear,
+# indicating that it is not perfectly random. We can say it is more or less of Normally
+# Distributed given our model, and it is somewhat linear model.
+
+
+## 3b)
+anovaecho <- aov(basebp ~ sbp)
+summary(anovaecho)
+
+# We find R^2 = 1 - (RSS/SST), and SST = RSS + SSreg -->SST = 18065 + 110466 = 128531 &
+# R^2 = 1 - (110466/128531) = 0.1405
+RSS <- 110466
+SST <- (110466 + 18065)
+R_sq <- (1 - (RSS/SST))
+R_sq
+
+# Null Hypothesis: the coefficient equals to zero --> REJECT (for p-value < 0.05)
+# For F-tests, the NULL HYPOTHESIS: All coefficients equal to zero
+# We see that the  p-value < 0.05. We can see that the p-value under the F-statistic 
+# is 9.71e-11. Since the p-value is less that 0.05, we therefore REJECT the Null 
+# Hypothesis. 
+
+### F-Stat calculation:
+# F = MSR/MSE = (SSR/1)/(SSE/227) = SSR/SSE * 277 = SSR/(SST - SSR)*277
+# R^2 = SSR/SST
+# F = (SST*R^2)/ (SST - SST*R^2) *277 = R^2/(1-R^2)*277
+# F = R^2/(1 - R^2)*277
+n <- nrow(echodata)
+F_stat <- (0.1405)/((1-0.1405)/(n - 2))
+F_stat
+# We also see that the F-value is 45.3. We see the F-value & F-table both are the same.
+# From this, we can see we REJECT the Null Hypothesis.
+
+# Se^2 = Var(Y)*(1 - r^2)
+# SSE = (1 - R^2)*SST --> SSE = (1 - r^2)*SST --> divide by (n - 1) --> SSE/(n - 1) = 
+# (1 - r^2)*(SST/(n - 1)) --> SSE/(n - 2) = Se^2 --> but SSE/(n - 1) = (1 - r^2)*Var(Y)
+SSE <- (1 - R_sq)*SST
+Se2_true <- (SSE/(n - 2))
+Se2_estim <- var(basebp)*(1 - R_sq)
+Se2_true
+Se2_estim
+
+# We see that it is approximately the same for both Se^2 because the difference is 
+# from (n - 2) vs. (n - 1). This essentially true for Se^2.
+
+
+## 3c)
+# (Adjusted) R^2 = 1 - (1 - R^2)*((n-1)/(n - p - 1))
+# (Adjusted) R^2 = 1 - [RSS / (n - p - 1)] / [SST / (n-1)] --> (Adjusted) R^2 = 0.1374
+R_sq_adj <- 1 - (1 - 0.1405)*((n - 1)/(n - 2))
+R_sq_adj
+R_sq
+
+# The reason why R^2 (Adjusted) is lower than R^2 (Multiple) is because it takes into 
+# account for the Parameter. The more Parameters you have, the lower the R^2 (Adjusted)
+# is. If there was no Parameter, which is not possible for any linear model, then both
+# R^2 (Multiple) and R^2 (Adjusted) will be approximately equal.
+
+
+## 3d)
+par(mfrow = c(2, 2))
+plot(m3a, main = "Model 3A")
+
+# We can see from the Residuals vs. Fitted plot has no distinct pattern across the horizontal
+# line, indicating there is not a non-linear relationship and has linearity. The Normal
+# Q-Q plot shows us the residuals are Normally distributed, which is a good sign for our
+# model. The Scale-Location plot tells us the assumption of equal variance (homoscedasticity).
+# We see from this plot that it does satisfy our assumption for homoscedasticity because the
+# points are equally spread across the horizontal line. Lastly, the Residuals vs. Leverage
+# plot helps us find possible outliers/good leverages/bad leverages, such as 9, 55, 214.
+
+
+## 3e)
+# Find hatvalues
+hatv <- hatvalues(m3a)
+LV <- ifelse(hatv >= 2*mean(hatv), "YES", "NO")
+table(LV)
+
+# Find standardized residuals
+std.error <- rstandard(m3a)
+OL <- ifelse(abs(std.error) >= 2, "YES", "NO")
+table(OL)
+
+# Combine the table
+table(LV, OL)
+
+
+## 3f)
+gg <- data.frame(hatv, std.error)
+ggplot(gg, aes(x = hatv, y = std.error)) +
+  geom_point() +
+  geom_hline(yintercept = 2, color = "red") +
+  geom_hline(yintercept = -2, color = "red") +
+  geom_vline(xintercept = 2*mean(hatv), color = "blue")
+
+
+
+# Problem 4
+## 4a)
+# Use inverse response plot
+par(mfrow = c(1,1))
+inverseResponsePlot(m3a)
+
+m4a <- lm(basebp^(1.5) ~ sbp)
+summary(m4a)
+par(mfrow = c(2,2))
+plot(m4a, main = "Model 4A")
+
+# We can see that Model 4A in Problem 4a is slightly better because you can see the 
+# Multiple R^2 is 0.1408 & Adjusted R^2 is 0.1377, compared to 0.1405 & 0.1374 respectively
+# for Model 3 in Problem 3a. Overall, they are pretty similar, except that Model 4A is 
+# 0.003 better in terms of R^2.
+
+
+## 4b)
+summary(powerTransform(cbind(basebp, sbp) - 1))
+# We accept the assumption lamda = c(0, 0), and the LRT shows the parameters are equal
+# to zero for all log transformations. 
+
+# Choose lambda = (0, 0), which means log(x) and log(y)
+m4b <- lm(log(basebp) ~ log(sbp))
+summary(m4b)
+par(mfrow = c(2, 3))
+plot(m4b, Main = "Model 4B")
+
+# We can see that Model 4B in Problem 4b is worse because you can see the 
+# Multiple R^2 is 0.1333 & Adjusted R^2 is 0.1302, compared to 0.1405 & 0.1374 respectively
+# for Model 3 in Problem 3a. Overall, Model 3 is a better choice for the than Model 4B.
+
+
+
+# Problem 5
+## 5a)
+salmondata <- read.table("salmon.txt", header = TRUE)
+
+# From the table we can get the F-value and Pr(>F)
+# SST = (n - 1)*Var(Y)
+# SSR = R2 * SST
+# SSE = SST - SSR
+# MSR = SSR/df1
+# MSE = SSE/df2
+
+n <- nrow(salmondata)
+df1 <- 1
+df2 <- 98
+R2 <- 0.2915
+variance_y <- 2138.142
+
+
+SST = (n - 1)*variance_y
+SSR = R2 * SST
+SSE = SST - SSR
+MSR = SSR/df1
+MSE = SSE/df2
+
+SST
+SSR
+SSE
+MSR
+MSE
+
+# F-value: 40.32
+# Pr(>F): 6.747e-09
+# SST: 211676.1
+# SSR: 61703.57
+# SSE: 149972.5
+# MSR: 61703.57
+# MSE: 1530.332
+
+anova(lm(salmondata$Marine ~ salmondata$Freshwater))
+
+
+## 5b)
+S_xx <- (100 - 1)*676.0541
+x_bar <- 117.9
+
+h_4 <- (1/100) + ((86 - x_bar)^2 / S_xx)
+h_4 > (4/100)
+
+h_41 <- (1/100) + ((84 - x_bar)^2 / S_xx)
+h_41 > (4/100)
+
+h_53 <- (1/100) + ((179 - x_bar)^2 / S_xx)
+h_53 > (4/100)
+
+# We see that the Observation 53 is a Leverage Point.
+
+
+## 5c)
+# Se = sqrt(SSE/(n-2))
+
+Se <- sqrt(SSE/(n - 2))
+Se
+
+e_4 <- 506 - (511.3656 - (0.9602 * 86))
+r_4 <- e_4 / (Se * sqrt(1 - h_4))
+r_4 >= 2
+
+e_41 <- 511 - (511.3656 - (0.9602 * 84))
+r_41 <- e_41 / (Se * sqrt(1 - h_41))
+r_41 >= 2
+
+e_53 <- 407 - (511.3656 - (0.9602 * 179))
+r_53 <- e_53 / (Se * sqrt(1 - h_53))
+r_53 >= 2
+
+# We see that Observation 41 is an Outlier.
+
+
+## 5d)
+# 4 - (iv) Not a leverage point nor an outlier (ordinary)
+# 41 - (ii) An outlier but Not a leverage point
+# 53 - (iii) A good leverage point

@@ -1,0 +1,138 @@
+---
+title: "Stats 101A Homework 3 (Lecture 1B)"
+author: "Charles Liu (304804942)"
+date: "February 13, 2020"
+output:
+pdf_document: default
+html_document: default
+---
+
+# Loading Necessary Packages/Data/:
+
+```{r include = FALSE}
+library(readr)
+library(car)
+library(lm.beta)
+library(corrplot)
+NCD <- read_csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2020/Stats 101A/Homeworks/HW 3/NCBirthNew.csv")
+attach(NCD)
+```
+
+
+# Removing Missing Data:
+```{r include = FALSE}
+NCD$AveCigs[is.na(NCD$AveCigs)] <- round(mean(AveCigs, na.rm = TRUE))
+NCD$`Age of father`[is.na(NCD$`Age of father`)] <- round(mean(`Age of father`, na.rm = TRUE))
+NCD$`Age of mother`[is.na(NCD$`Age of mother`)] <- round(mean(`Age of mother`, na.rm = TRUE))
+NCD$Visits[is.na(NCD$Visits)] <- round(mean(Visits, na.rm = TRUE))
+NCD$`Wt Gain`[is.na(NCD$`Wt Gain`)] <- round(mean(`Wt Gain`, na.rm = TRUE))
+NCD$`Gest Age`[is.na(NCD$`Gest Age`)] <- round(mean(`Gest Age`, na.rm = TRUE))
+```
+
+
+# Problem 1:
+## 1a)
+```{r}
+cormat <- round(cor(NCD[, c("Birth Weight (g)", "AveCigs", "Age of father", 
+                            "Age of mother", "Visits", 'Wt Gain', "Gest Age")], 
+                    use = "pairwise.complete.obs"), 4)
+cormat
+```
+
+## 1b)
+```{r}
+scatterplotMatrix( ~ `Birth Weight (g)` + AveCigs + `Age of father` + 
+                     `Age of mother` + Visits + `Wt Gain` + `Gest Age`, 
+                   data = NCD)
+# This portion of the code will take the longest
+```
+
+## 1c) 
+```{r}
+par(mfrow = c(1, 1))
+corrplot.mixed(cormat)
+```
+What I noticed is that the largest circle (which means the higher the correlation is) is between "Age of Father" and "Age of Mother". This means they are highly correlated with each other. We can also see for "Visit", "Wt Gain", and "Gest Age" has a relatively smaller correlation, due to their circles being smaller. We do see that "Gest Age" and "Birth Weight (g)" have high correlation with each other because of the bigger circle.
+
+
+# Problem 2:
+## 2a)
+I will be choosing "Visits", "Wt Gain", and "Gest Age" for my Numerical Predictors.
+
+## 2b)
+```{r}
+m1 <- lm(`Birth Weight (g)` ~ Visits + `Wt Gain` + `Gest Age`, data = NCD)
+summary(m1)
+par(mfrow = c(2, 2))
+plot(m1)
+```
+From our Summary, we can see that all our Predictors are significant. We would REJECT the Null Hypothesis. Our R-Squared (Multiple) is fairly good at 37.22% variation in our model. Checking our Plot and its Assumptions, we can see the "Residuals vs. Fitted" has randomness and proves it has non-linearity. Our "Normal Q-Q" plot is relatively a straight line, proving it follows a Normal Distribution. For "Scale-Location", we see they have about same variance, and "Leverages" plot tells us what the leverage values are. Overall, this satisfies our assumptions and is a rather good model to use.
+
+## 2c)
+```{r}
+m1_1 <- lm.beta(m1)
+m1_1
+```
+From our lm.beta() using Model 1, we can see that the most important predictor from our three chosen is "Gest Age". It has the highest Standardized Coefficients at 0.57461260. Next most important predictor would be "Wt Gain" at 0.11315756, and then we have "Visits" at 0.05334635. 
+
+
+# Problem 3:
+## 3a)
+```{r}
+m2 <- lm(`Birth Weight (g)` ~ AveCigs + `Age of father` + `Age of mother` +
+           Visits + `Wt Gain` + `Gest Age`, data = NCD)
+# We add 3 new Predictors: Visits, `Wt Gain`, `Gest Age`
+```
+
+## 3b)
+```{r}
+par(mfrow = c(2, 2))
+plot(m2)
+```
+Checking our Plot and its Assumptions, we can see the "Residuals vs. Fitted" has randomness and proves it has non-linearity. Our "Normal Q-Q" plot is relatively a straight line, proving it follows a Normal Distribution. For "Scale-Location", we see they have about same variance, and "Leverages" plot tells us what the leverage values are. Overall, this satisfies our assumptions and is a rather good model to use.
+
+## 3c)
+```{r}
+m2_1 <- lm.beta(m2)
+m2_1
+```
+From our lm.beta() using Model 2, we can see that the most important predictor from our three chosen is "Gest Age". It has the highest Standardized Coefficients at 0.57461260. Next most important predictor would be "Age of mother" (0.12089712) and then "Wt Gain" (0.11900368). The rest of the predictors have relatively lower Standardized Coefficients, making them not that important compared to the ones stated.
+
+
+# Problem 4:
+## 4a)
+```{r}
+anova(m1, m2)
+```
+New predictors are significant since F-value is large, and the p-value is significant. Therefore, we reject Null Hypothesis.
+
+## 4b)
+Yes, it is worth to have the additional 3 predictors because it helps further explain our model. All 6 predictors, along with the F-value, are all statistically significant. This leads us to say these additional predictors are useful and worth having. We can also see that Model 2 has a better R-Squared (Multiple) than Model 1's. It is slightly better by about 1.8% increase in R-Squared.
+
+## 4c)
+```{r}
+summary(m2)$r.squared - summary(m1)$r.squared
+```
+For Model 2, the R-Squared increased by about 1.767524% from Model 1.
+
+## 4d)
+The change is significant because Model 2 will always have the better R-Squared and be the better model since it helps give more explanation for our model. The significance for 6 predictors is better as they are all statistically significant. The improvement is very small for the R-Squared, but it is nonetheless better. All these significance lead us to say that more significant predictors lead to better fitted model. Overall, the change is significant.
+
+
+# Problem 5:
+## 5a)
+```{r}
+m3 <- lm(`Birth Weight (g)` ~ as.factor(`Gender of child`), data = NCD)
+summary(m3)
+```
+The variable "Gender of Child" does *NOT* have a decent R-Squared. It has R-Squared (Multiple) at 0.007561. Model 3 explains less than 1% variation of our model.
+
+## 5b)
+```{r}
+m4 <- lm(`Birth Weight (g)` ~ AveCigs + `Age of father` + `Age of mother` +
+           Visits + `Wt Gain` + `Gest Age` + as.factor(`Gender of child`), data = NCD)
+summary(m4)
+anova(m2, m4)
+summary(m4)$r.squared - summary(m2)$r.squared
+```
+Adding the categorical predictor does improve our Model 2, but it only does it by a very small amount. We can see the F-value is higher and the p-value is statistically significant for all predictors. The R-Squared (Multiple) is increase by only 0.8645729%, which is a very small amount. Even though it is small, it still improves our model.

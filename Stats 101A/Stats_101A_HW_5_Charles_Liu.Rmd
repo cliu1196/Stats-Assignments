@@ -1,0 +1,325 @@
+---
+title: "Stats 101A Homework 5 Lecture 1B"
+author: "Charles Liu (304804942)"
+date: "3/6/2020"
+output: pdf_document
+---
+
+# Loading Necessary Data/Models:
+
+```{r message = FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(car)
+library(readr)
+library(VIM)
+library(mice)
+library(gridExtra)
+library(corrplot)
+
+FifaNoY <- read.csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2020/Stats 101A/Project/Project Attempts/FifaNoY.csv", stringsAsFactors = FALSE)
+
+FifaTrainNew <- read.csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2020/Stats 101A/Project/Project Attempts/FifaTrainNew.csv", stringsAsFactors = FALSE)
+
+FifaTrainNew$Overall2 <- FifaTrainNew$Overall
+FifaNoY$Overall2 <- FifaNoY$Overall^2
+
+
+#attach(FifaTrainNew)
+RepmeanByClub <- FifaTrainNew %>%
+  group_by(Club) %>%
+  summarise(
+    average.wage = mean(WageNew),
+    average.reputation = mean(International.Reputation)
+  ) %>%
+  arrange(desc(average.wage))
+
+#RepmeanByClub
+#attempt to group Club by international
+FifaTrainNew <- left_join(FifaTrainNew, RepmeanByClub[,c("Club","average.reputation")], by = c("Club" = "Club"))
+FifaNoY <- left_join(FifaNoY, RepmeanByClub[,c("Club","average.reputation")], by = c("Club" = "Club"))
+
+FifaTrainNew$ClubRep2 <- ifelse(FifaTrainNew$average.reputation >= 2, "very high", ifelse(FifaTrainNew$average.reputation >= 1.85 , "high", ifelse(FifaTrainNew$average.reputation >= 1.45, "mid-high", ifelse(FifaTrainNew$average.reputation >= 1.25, "mid", ifelse(FifaNoY$average.reputation >= 1.15, "mid-low", ifelse(FifaTrainNew$average.reputation >= 1.05, "low", "very low"))))))
+
+
+FifaNoY$ClubRep2 <- ifelse(FifaNoY$average.reputation >= 2, "very high", ifelse(FifaNoY$average.reputation >= 1.85 , "high", ifelse(FifaNoY$average.reputation >= 1.45, "mid-high", ifelse(FifaNoY$average.reputation >= 1.25, "mid", ifelse(FifaNoY$average.reputation >= 1.15, "mid-low", ifelse(FifaNoY$average.reputation >= 1.05, "low", "very low"))))))
+
+#MLR
+SLR3 <- lm(log(WageNew) ~ 0 + Overall2 + ClubRep2, data = FifaTrainNew)
+summary(SLR3)
+anova(SLR3)
+
+leverages <- hatvalues(SLR3)
+# h_ii > 2 * (p+1)/n
+leverage_points <- which(leverages > 2 * mean(leverages))
+outliers <- which(abs(rstandard(SLR3)) > 2)
+bad_leverages <- intersect(leverage_points, outliers)
+
+SLR3.1 <- lm(log(WageNew) ~ 0 + Overall2 + ClubRep2, data = FifaTrainNew[-bad_leverages,])
+summary(SLR3.1)
+```
+
+
+
+# Q1) Report the following from your training data used to create your latest MLR:
+
+## 1a) State your name and your group name.
+
+Group  Kaggle Lec 1A
+
+
+## 1b) The dimension of your training data after cleaning the NAs
+
+```{r}
+dim(FifaTrainNew)
+```
+
+12745 rows (observations) , 80 columns (variables)
+
+
+## 1c) Summary statistics of your response variable only.
+
+```{r}
+summary(FifaTrainNew$WageNew)
+```
+
+
+## 1d) How many predictors used to create your latest MLR.
+
+Two: Overall2 and ClubRep2, but on our summary, we have 8 categories total since we grouped our predictors into categories and have numerical predictor.
+
+
+## 1e) Classify your predictors: Categorical or Numerical: Template Table 
+
+Categorical: ClubRep2
+Numerical: Overall2
+
+
+## 1f) Report your latest R2 and latest Rank on Kaggle.
+
+R-Squared = 0.94183
+Rank: 43
+
+
+## 1g) Create matrix plot for your variables.
+
+```{r}
+pairs(~log(WageNew) + Overall2, data = FifaTrainNew, main = "Scatterplot Matrix")
+```
+
+
+## 1h) Create corrplot of your numerical variables.
+
+```{r}
+corrplot(cor(FifaTrainNew[ ,c('WageNew', 'Overall2')]), method = "circle")
+corrplot.mixed(cor(FifaTrainNew[ ,c('WageNew', 'Overall2')]))
+```
+
+
+
+# Q2) Have you used any transformation on your predictors or on your response
+variable?
+
+## 2a) If yes, explain how did you decide what transformation to be used. List the variables and the transformation function used in your latest MLR. (Provide proofs of your work).
+
+```{r}
+summary(powerTransform(cbind(WageNew, Overall) ~ 1, data = FifaTrainNew))
+```
+
+
+## 2b) If no, explain why the suggested transformations did not work out for your latest MLR. (Provide proofs of your work).
+
+N/A
+
+
+
+# Q3) Report the following from your latest MLR:
+
+## 3a) Anova table of your MLR
+
+```{r}
+anova(SLR3.1)
+```
+
+
+## 3b) Sort your predictors by their importance or contributions
+
+```{r}
+# 1. Overall2
+# 2. ClubRep2
+anova(SLR3.1)[order(anova(SLR3.1)$`Sum Sq`, decreasing=TRUE),]
+```
+
+
+## 3c) Report R2 and your R2-Adjusted of your MLR using the training data.
+
+R^2 =  0.9934
+R^2-adj = 0.9934
+
+
+## 3d) Report the VIF of every predictor in your MLR make sure you have no multicollinearity violation (No predictor has a VIF exceeding five). Use the following template
+
+```{r}
+vif(lm(log(WageNew)~ Overall2 + ClubRep2, data = FifaTrainNew))
+```
+
+
+
+# Q4) Report the following:
+
+## 4a) Diagnostics six plots of your latest MLR. Comment on how well or how bad your MLR.
+
+```{r}
+diagPlot<-function(model){ 
+  p1<-ggplot(model, aes(model$fitted,
+                        model$residuals),label=rownames(bonds))+geom_point()
+  p1<-p1+stat_smooth(method="loess")+geom_hline(yintercept=0, col="red", linetype="dashed") 
+  p1<-p1+xlab("Fitted values")+ylab("Residuals") 
+  p1<-p1+ggtitle("Residual vs Fitted Plot")+theme_bw() 
+  p2<-ggplot(model,aes(sample=rstandard(model))) + stat_qq() + stat_qq_line()
+  p2<-p2+xlab("Theoretical Quantiles")+ylab("Standardized Residuals")
+  p2<-p2+ggtitle("Normal Q-Q") 
+  p3<-ggplot(model, aes(model$fitted,sqrt(abs(rstandard(model)))))+geom_point(na.rm=TRUE)
+  p3<-p3+stat_smooth(method="loess", na.rm = TRUE)+xlab("Fitted Value")
+  p3<-p3+ylab(expression(sqrt("|Standardized residuals|")))
+  p3<-p3+ggtitle("Scale-Location")+theme_bw()+geom_hline(yintercept=sqrt(2),col="red", linetype="dashed") 
+  p4<-ggplot(model, aes(seq_along(cooks.distance(model)),cooks.distance(model)))+geom_bar(stat="identity", position="identity")
+  p4<-p4+xlab("Obs. Number")+ylab("Cook's distance") 
+  p4<-p4+ggtitle("Cook's distance")+theme_bw()+geom_hline(yintercept=4/(length(model$residuals-2)), col="red", linetype="dashed") 
+  p5<-ggplot(model,aes(hatvalues(model),rstandard(model)))+geom_point(aes(size=cooks.distance(model)), na.rm=TRUE)
+  p5<-p5+stat_smooth(method="loess", na.rm=TRUE)
+  p5<-p5+xlab("Leverage")+ylab("Standardized Residuals")
+  p5<-p5+ggtitle("Residual vs Leverage Plot")
+  p5<-p5+scale_size_continuous("Cook's Distance", range=c(1,5))
+  p5<-p5+theme_bw()+theme(legend.position="bottom")+geom_hline(yintercept=c(-2,2), col="red", linetype="dashed")+geom_vline(xintercept=4/(length(model$residuals)), col="blue",linetype="dashed")+ylim(-4,4) 
+  p6<-ggplot(model,aes(hatvalues(model),cooks.distance(model)))+geom_point(na.rm=TRUE)+stat_smooth(method="loess",na.rm=TRUE)
+  p6<-p6+xlab("Leverage hii")+ylab("Cook's Distance") 
+  p6<-p6+ggtitle("Cook's dist vs Leverage") 
+  p6<-p6+geom_abline(slope=seq(0,3,0.5), color="gray", linetype="dashed")
+  p6<-p6+theme_bw() 
+  return(grid.arrange(p1,p2,p3,p4,p5,p6,ncol=3)) }
+
+
+
+diagPlot(SLR3)
+```
+
+We notice that for the most part our residuals are mostly randomly distributed, with a slight dip and increase, with a few violations with large negative residuals. Our errors are also about normally distributed, except at the lower end of the theoretical quantiles. We wouuld need to investigate further on how to make our residuals more normally distributed there. For the most part, we have constant variance in our models, which is a good sign. There seem to be a few violaters with extermely high standard residuals that we would need to further investigate. We notice that we have a few points we would neet to address that are bad leverages. We would need to invsetigate further to see how influential those points are.
+
+
+## 4b) Identify your bad leverage points. How many and what are you planning to do to fix this problem.
+
+```{r}
+leverages <- hatvalues(SLR3.1)
+# h_ii > 2 * (p+1)/n
+leverage_points <- which(leverages > 2 * mean(leverages))
+outliers <- which(abs(rstandard(SLR3.1)) > 2)
+bad_leverages <- intersect(leverage_points, outliers)
+bad_leverages
+length(bad_leverages)
+```
+
+We plan on fixing this problem by deleting the rows of the observations that are bad leverages. 
+
+
+## 4c) Identify all good leverage points based on your latest MLR. Any comments?
+
+```{r}
+good_leverages <- leverage_points[which(!(leverage_points %in% bad_leverages))]
+length(good_leverages)
+ 
+```
+
+We have 1316 good leverages. This could mean that we are not predicting the wages of the players that have more extreme (lower or higher) Overall scores or international reputation very well. But this is a good sign it means they do not affect our model negatively.
+
+
+## 4d) Report your summary statistics of the predicted response variable in both training and testing data sets. Any comments?
+
+```{r}
+#FifaTrainNew
+new_data = data.frame(FifaTrainNew$Overall2, FifaTrainNew$ClubRep2)
+names(new_data) = c("Overall2", "ClubRep2")
+predicts <- exp(predict(SLR3.1, new_data)) #%>% as.data.frame()
+predicts <- ifelse(is.na(predicts), mean(predicts, na.rm=TRUE), predicts)
+#predictions <- cbind(FifaTrainNew$Ob, FifaTrainNew$WageNew, predicts)
+summary(predicts)
+
+#For FifaNoY
+new_data = data.frame(FifaNoY$Overall2,FifaNoY$ClubRep2)
+names(new_data) = c("Overall2", "ClubRep2")
+predicts <- exp(predict(SLR3.1, new_data)) #%>% as.data.frame()
+predicts <- ifelse(is.na(predicts), mean(predicts, na.rm=TRUE), predicts)
+#predictions <- cbind(FifaNoY$Ob, predicts)
+summary(predicts)
+## We notice that we have the same minimum wage predictions. Most of the values are very similar, except for the maximum values. This perhaps indicates that we are being biased towards higher values in our original data compared to otherwise. 
+```
+
+
+
+# Q5) Apply the step function and regsubsets function in r on your latest MLR and use it to answer the following: Need library “leaps”
+
+## 5a) Identify the optimal model or models based on R2 adj , AIC, BIC from the approach based on all possible subsets.
+
+```{r message = FALSE}
+attach(FifaTrainNew)
+
+MLR3.1 <- lm(log(WageNew) ~ 0 + I(Overall^2), data = FifaTrainNew)
+MLR3.2 <- lm(log(WageNew) ~ 0 + ClubRep2, data = FifaTrainNew)
+MLR3.3 <- lm(log(WageNew) ~ 0 + I(Overall^2) + ClubRep2, data = FifaTrainNew)
+
+summary(MLR3.1)$adj.r.squared
+summary(MLR3.2)$adj.r.squared
+summary(MLR3.3)$adj.r.squared
+
+extractAIC(MLR3.1, k=2)
+extractAIC(MLR3.2, k=2)
+extractAIC(MLR3.3, k=2)
+
+extractAIC(MLR3.1, k=log(length(WageNew)))
+extractAIC(MLR3.2, k=log(length(WageNew)))
+extractAIC(MLR3.3, k=log(length(WageNew)))
+```
+
+
+## 5b) Identify the optimal model or models based on AIC and BIC from the approach based on 
+
+```{r}
+# backward selection.
+
+backAIC <- step(SLR3,direction="backward", data=FifaTrainNew)
+backBIC <- step(SLR3,direction="backward", data=FifaTrainNew, k=log(length(WageNew)))
+```
+
+
+## 5c) Identify the optimal model or models based on AIC and BIC from the approach based on forward selection.
+
+```{r}
+mint <- lm(log(WageNew) ~ 0 + 1, data=FifaTrainNew)
+
+forardAIC <- step(mint, scope=list(lower = ~1, upper = ~I(Overall^2) + Overall2), direction="forward", data=FifaTrainNew)
+
+forwardBIC <- step(mint, scope=list(lower = ~1, upper = ~I(Overall^2) + Overall2), direction="forward", data=FifaTrainNew, k=log(length(WageNew)))
+```
+
+
+## 5d) Compare and contrast the models chosen in (A) (B) & (C). Check those which are similar and those which are different “maybe”.
+
+We would choose model MLR3.3 from part (5a) because it yields the highest R-Squared (Adjusted), and the AIC and BIC are the smaller differences, giving us the best model choice. MLR3.3 has the highest R-Squared (adjusted), and has the best AIC and BIC. We can see MLR3.1 and MLR3.2 have similar R-Squared (adjusted). As for AIC and BIC, MLR3.3 yields the best results for not overfitting nor underfitting.
+
+## 5e) Recommend a final model. Give detailed reasons to support your choice on final model.
+
+For our final model, I would recommend MLR3.3 because it yields the highest R-Squared (Adjusted), and the AIC and BIC are the smaller differences, giving us the best model choice. We can also see it satisfies the assumptions for the plot, and it works. It has undergone the necessary transformations as well to make it normal as possible.
+
+
+## 5f) Interpret the regression coefficients in the final model. Is it necessary to be cautious about taking these results too literally? 
+
+Y = B0 + B1*x1 + B2*x2 + B3*x3 + B4*x4 + B5*x5 + B6*x6 + B7*x7 + B8*x8
+
+```{r}
+summary(MLR3.3)
+```
+
+For every 1 unit of increase in log(WageNew), we see, on average, an increase of (“some number” = slope) in (“predictor”).
+For every unit increase in `Overall^2`, `log(WageNew)` is expected to increase by 8.603e-04, on average. A player with a `ClubRep2` of high is expected to increase `log(WageNew)` by 5.898, on average. A player with a `ClubRep2` of low is expected to increase `log(WageNew)` by 4.637, on average. A player with a `ClubRep2` of mid is expected to increase `log(WageNew)` by 5.323, on average. A player with a `ClubRep2` of mid-high is expected to increase `log(WageNew)` by 5.115, on average. A player with a `ClubRep2` of mid-low is expected to increase `log(WageNew)` by 4.617, on average. A player with a `ClubRep2` of NA is expected to increase `log(WageNew)` by 4.660, on average. A player with a `ClubRep2` of very high is expected to increase `log(WageNew)` by 5.862, on average. A player with a `ClubRep2` of very low is expected to increase `log(WageNew)` by 4.602, on average.

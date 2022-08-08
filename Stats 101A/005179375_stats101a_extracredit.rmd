@@ -1,0 +1,266 @@
+---
+title: "STATS101 LECTURE 1 EXTRA CREDIT - LEAH SKELTON"
+author: "Leah Skelton"
+date: "2/27/2020"
+output: html_document
+---
+
+# Loading libraries/data/etc.
+```{r}
+library(car)
+library(ggplot2)
+library (GGally)
+library(tidyverse)
+library(ggpubr)
+data <- read_csv("C:/Users/cliuk/Documents/UCLA Works/UCLA Winter 2020/Stats 101A/Extra Credit/Bordeaux.csv")
+```
+
+# Question 1: 
+
+## Question 1A: 
+### First, using ifelse function, convert x3, x4, x5, x6 and x7 variables into categorical with "Yes" instead of 1 and "No" instead of 0. Name the new variables as P95andAboveNew, FirstGrowthNew, CultWineNew, PomerolNew and intageSuperstarNew respectively.  
+```{r}
+P95andAboveNew <- ifelse(data$P95andAbove == 1,"Yes","No")
+FirstGrowthNew <- ifelse(data$FirstGrowth == 1,"Yes","No")
+CultWineNew <- ifelse(data$CultWine == 1,"Yes","No")
+PomerolNew <- ifelse(data$Pomerol == 1,"Yes","No")
+VintageSuperstarNew <- ifelse(data$VintageSuperstar == 1,"Yes","No")
+```
+
+## Question 1B: 
+### Create ggpairs plot for the response and the other two numerical predictors. What did you notice? 
+```{r}
+attach(data) 
+ggpairs(data[,2:4]) 
+```
+
+#### I notice here that price has the highest correlation with Parkerpoints, and the lowest with CoatesPoints. I also notice that ParkerPoints and CoatesPoints have a correlation of about 0.5 which suggests that they are related and not completely independent.
+
+## Question 1C: 
+### Create a MLR (call it m0) using the two numerical predictors only. Study the summary, anova, vif and diagnostics of the model. 
+```{r}
+m0 <- lm(Price ~ ParkerPoints + CoatesPoints, data = data) 
+summary(m0)
+##R^2 0.37
+##CoatesPoints insignificant, low sigma^2
+anova(m0)
+##CoatesPoints low SS 
+plot(m0)
+##violation of randomness in errors.. there's a trend 
+##assumption of normality is not perfect. Not horrible
+##huge violation of equal variances.. violation of linearity
+##a couple bad leverage points
+plot(m0,4)
+vif(m0)
+##no multicollinearity issues so they're independent enough 
+```
+
+## Question 1D: 
+### Use leveragePlots and mmps on m0. What did you notice? Run powerTransform and inversResponsePlot functions on m0. What do you need to do to make m0 a better model? Do it. 
+```{r}
+leverage <- hatvalues(m0) 
+##h_ii > 2 * (p + 1) / n 
+which(leverage >= 2 * (2+1)/72 & abs(rstandard(m0)) >= 2)
+which(leverage >= 2 * mean(leverage) & abs(rstandard(m0)) >= 2)
+
+leveragePlots(m0)
+mmps(m0)
+powerTransform(cbind(Price, ParkerPoints, CoatesPoints)~1,data = data)
+inverseResponsePlot(m0)
+
+m1 <- lm(I(Price^0.5) ~ I(ParkerPoints^0.5) + I(CoatesPoints^4), data = data)
+summary(m1) 
+##takes R^2 from 0.37 to 0.59
+```
+
+#### I see here that the variables I used could all use transformation based off of the Transformation function, mmps, and the leverage plots. There are only good leverage points here. My new model is above called m1.
+
+## Problem 1E: 
+### A statistician suggested to use log transformation on the response variable and the two numerical predictors.  Do you agree or disagree with that suggestion? Try it first then compare to m0.
+#### Not sure if you mean the "transformed" m0 or the original so I'm gonna compare it to the original 
+```{r}
+m2 <- lm(log(Price) ~ log(ParkerPoints) + log(CoatesPoints), data = data)
+summary(m2) #0.37 to 0.76
+```
+
+#### I do agree with this suggestion. When looking at the power transformation output, I noticed that the suggestions listed for the variables were all close to 0 and 1. For this reason, as mentioned in class, we would then try to use the log function. This worked, and it brought the original m0's R^2 value from 0.37 to 0.76
+
+# Problem 2: 
+
+## Problem 2A: 
+### Create a side by side box plots of the variable Price for each of the categorical variables created in Question 1 Part A. Which of these predictors you think are good predictor for the variable "Price"? Why?
+```{r}
+var <- data %>% select(Price, P95andAbove,FirstGrowth,CultWine,Pomerol,VintageSuperstar)
+
+var %>% 
+  gather(variable, value,-Price) %>%
+  ggplot(aes(factor(value), Price, fill = factor(value))) +
+  geom_boxplot() +
+  facet_wrap(~variable, scales = "free_x", nrow = 1, strip.position = "bottom") +
+  theme(panel.spacing = unit(0, "lines"),panel.border = element_rect(fill = NA),
+  strip.background = element_blank(), axis.title.x = element_blank(),legend.position = "none",
+  strip.placement = "outside")
+```
+
+#### Based off of this visualization, I think that Cultwine would be a good predictor. I believe this because there is a lot of variation and I believe that that variation in the variable could lead to significance in predicting prices. 
+
+## Problem 2B: 
+### Create a MLR (call it mcat) using all categorical predictor to predict "Price". Check summary, anova, vif and diagnostics of the model. Does the MLR summary agrees with your answer in part A? 
+```{r}
+mcat <- lm(Price ~ P95andAboveNew + FirstGrowthNew + CultWineNew + PomerolNew + VintageSuperstarNew,data = data) ##0.7679
+summary(mcat) #agrees with my prediction 
+
+anova(mcat) #agrees with my prediciton
+plot(mcat)
+##These plots are pretty bad. The first plot seems okay, the second is a violation of normality assumpion, the third is a huge violation of linearity and equal variance, and there are bad leverage points listed in the fourth plot.
+vif(mcat) 
+##No multicollinearity violations
+```
+
+#### Overall, I would say that my prediction is correct. Though the model needs some help to become valid by the violations from the plot(VIF is fine), CultWine is very significant and has the highest contribution to the total sum of squares. 
+
+## Problem 2C: 
+### Interpret the y-intercept and all the partial slopes in your mcat MLR.
+
+#### Y = B0 + B1x1 + B2x2 + B3x3 + B4x4 + B5x5
+#### The Y intercept would be B0 = 142.4 which would be the average estimated price of wine given that it is not scored 95 and above by Parker, not a first growth, not a cult wine, not from Pomerol, and not a vintage superstar. Each beta(B1,...,B5) is thus an "adjustment" and is only added if that variable is true. The slopes are all 0 if their respective betas are not true. Otherwise, If the wine is scored 95 and above by Parker, the slope is 507.5 units (I'm guessing dollars), if the wine is a first growth, the slope is 2170.6 units. If the wine is a cult wine, the slope is 4711.3 units. If the wine is from Pomerol, the slope is 775.7. Lastly, if the wine is a vintage superstar, the slope is 1614.9 units. These slopes are then added to the intercept to find respective Y.
+
+## Problem 2D: 
+### Create 5C2 = 10 pairwise interaction plots. Which ones you think should be added to your model mcat? 
+```{r}
+#95,First
+ggplot() +aes(x = P95andAboveNew, color = FirstGrowthNew, group =FirstGrowthNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+#95,Cult
+ggplot() +aes(x = P95andAboveNew, color = CultWineNew, group =CultWineNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##YES
+#95,Pom
+ggplot() +aes(x = P95andAboveNew, color = PomerolNew, group =PomerolNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+#95,Vint
+ggplot() +aes(x = P95andAboveNew, color = VintageSuperstarNew, group =VintageSuperstarNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line")
+##NO
+#First,Cult
+ggplot() +aes(x = FirstGrowthNew, color = CultWineNew, group =CultWineNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+#First,Pom
+ggplot() +aes(x = FirstGrowthNew, color = PomerolNew, group =PomerolNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+#First,Vint
+ggplot() +aes(x = FirstGrowthNew, color = VintageSuperstarNew, group =VintageSuperstarNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") ##NO
+#Cult,Pom
+ggplot() +aes(x = CultWineNew, color = PomerolNew, group =PomerolNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##YES
+#Cult,Vint
+ggplot() +aes(x = CultWineNew, color = VintageSuperstarNew, group =VintageSuperstarNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+#Pom,Vint
+ggplot() +aes(x = PomerolNew, color = VintageSuperstarNew, group =VintageSuperstarNew , y = Price) +stat_summary(fun.y = mean, geom = "point") +stat_summary(fun.y = mean, geom = "line") 
+##NO
+```
+
+#### I would like to add to my plot: Cult:Pom and 95:Cult
+
+## Problem 2E: 
+### Create a new MLR using the categorical predictors and the significant pairwise interactions (call it mcat2). Check summary, anova, and diagnostics of the model.   
+```{r}
+mcat2 <- lm(Price ~ P95andAboveNew + FirstGrowthNew + CultWineNew + PomerolNew + VintageSuperstarNew+ P95andAboveNew*CultWineNew + CultWineNew*PomerolNew,data = data)
+summary(mcat2) ##0.837
+anova(mcat2)
+plot(mcat2)
+plot(mcat2,4)
+anova(mcat,mcat2)
+```
+
+#### The full model brought the R^2 from 0.77 to 0.84 due to the interaction terms.The interaction of CultWine and Pomerol was one that I expected to be more significant than the interaction of CultWine and P95andAbove. Either way, they are both significant interaction terms, and contribute quite a bit to the SST. The diagnostics for this fit are quite a bit disappointing. Each has a violation. In the first, the violation isn't as strong, but the errors towards the right-hand-size of the distribution are not randomly placed above and below 0. The second plot is a pretty huge violation of normality assumpion, the third plot is a huge violation of linearity and equal variance, and there are some bad leverage points. I also did a partial F EVEN THOUGH I WASN'T ASKED TO BUT BECAUSE I'M A WONDERFUL STUDENT WHO GOES ABOVE AND BEYOND. The partial F showed that having a full model instead of reduced is worth the burden of having extra predictors.
+
+## Problem 2F: 
+### Conduct a Partial F-test between mcat and mcat2. What do you conclude?
+
+#### See problem 2E. I thought I was going above and beyond...
+
+# Problem 3: 
+
+## Problem 3A: 
+### Create a MLR (call it m1) using the suggested transformation on the numerical variables in the data along with the categorical predictors listed in your MLR mcat (No interaction terms). A total of 7 predictors. Check summary, anova, vif and diagnostics of the model.  
+```{r}
+summary(powerTransform(cbind(Price,ParkerPoints,CoatesPoints)~1))
+m1 <- lm(I(Price^-0.40) ~ I(ParkerPoints^0.5) + I(CoatesPoints^4) + P95andAboveNew + FirstGrowthNew + CultWineNew + PomerolNew + VintageSuperstarNew ,data = data)
+summary(m1) #0.897 
+anova(m1)
+vif(m1)
+#plot(mfull)
+```
+
+#### Significant increase in R^2, but there are 2 insignificant predictors. Diagnostics are pretty bad. Violation of assumption of linearity and equal variance, the errors are not randomly distributed above and below 0, violation of assumption of normality in the second plot, and there are bad leverage points. There is also a mulicollinearity violation shown by the VIF function on one of the variables.
+
+## Problem 3B. 
+### Create another MLR (call it mfull) using the suggested transformation on the numerical variables in the data along with the categorical predictors listed in your MLR mcat with the significant interaction terms). A total of 7 predictors. Check summary, anova, and diagnostics of the model. 
+```{r}
+mfull <- lm(I(Price^-0.40) ~ I(ParkerPoints^0.5) + I(CoatesPoints^4) + P95andAboveNew + FirstGrowthNew + CultWineNew + PomerolNew + VintageSuperstarNew + P95andAboveNew*CultWineNew + CultWineNew*PomerolNew ,data = data)
+summary(mfull) ##insignificant P95, Cult:Pom, VintageSup but R^2 = 0.90
+anova(m1,mfull) # INSIGNIFICANT.... That means things have to go! 
+anova(mfull)
+#plot(mfull)
+```
+
+#### Looking at the summary and anova, there are some predictors that we could do without. The partial F confirmed that there are variables in the full model that are unnecessary. The diagnostics look alright. The first diagnostic test looks okay, and so does the third. The second test violates the assumption of normality, and there are bad leverage points. 
+
+## Problem 3C: 
+### Interpret the y-intercept and all the partial slopes in your mfull MLR.
+
+#### The intercept here which is about 0.9 units (Still guessing dollars), would be the price for wine given that it got no parkerpoints, no coatespoints, did not get above 95, was not first growth, was not cult wine, was not from pomerol, and was not vintage superstar. -8.77e-2 is an adjustment multiplied by the number of parkerpoints that adjusts the slope. The same goes for Coates points. 95andAbove, FirstGrowth, CultWine,Pomerol, and VintageSuperstar are all categorical variables that take on "yes or no". If any of these are yes, you would add their adjustment slope, so for example, if the wine was indeed a cult wine, you would add -2.317e-2 units to the price of wine. Lastly, 95Above:CultWine, and CultWIne:Pomerol are adjustments if any item in the data were both of the variables in the interaction. For example, if a wine was both a cultwine and from pomerol, an adjustment of 1.707e-3 units would be added to the price.
+
+## Problem 3D: 
+### Which of the predictors need to be dropped from mfull?
+
+#### I would take out P95, Cult:Pom, VintageSup.
+
+## Problem 3E: 
+###Create a MLR (mred). Conduct partial F-test.  
+```{r}
+mred <- lm(I(Price^-0.40) ~ I(ParkerPoints^0.5) + I(CoatesPoints^4) + FirstGrowthNew + CultWineNew + PomerolNew + P95andAboveNew*CultWineNew,data = data) ## 0.90
+anova(mred,mfull)
+```
+
+#### This is good and means that the predictors from before in the full model were not necessary. I would go a bit further and take out 1 more predictor after this. See in following question.
+
+# Problem 4:  
+
+## Problem 4A: 
+### State your final MLR based on your answers to the previous three questions.
+```{r}
+mfin <- lm(log(Price) ~ I(ParkerPoints^0.5) + I(CoatesPoints^4) + FirstGrowthNew + CultWineNew + PomerolNew ,data = data)
+summary(mfin)
+anova(mfin,mred)
+```
+
+#### I could have used log() on Parkerpoints, but decided against it due to my R^2. I noticed before that the powerTransform told me to transform price by a negative power. This seemed to inverse all of the prices so if a wine had coatespoints then I would subract from the expected price. Instead, I used a log transformation on y, and I still had significance in all variables, and an even higher R^2. I also took out the last of the interactions and justified it with partial F-tests. I went back and took  out each of the predictors one at a time and found that none of them were necessary in the end and not worth about 0.02 increase in R^2. Overall, I got an R^2 of about 0.9196 which is decent, and as reduced as needed.
+
+## Problem 4B: 
+### Interpret the y-intercept and all the partial slopes in your final MLR
+
+#### The intercept here, -2.158e1 units would be the average expected price of wine given that it has 0 parkerpoints, 0 coatespoints, is not a firstgrowth, is not a cultwine, and is not from pomerol. If the wine got parker points, you would multiply the points by 2.819 as an adjustment. If the wine got coatespoints, you would multiply the points by 4.95e-6 as an adjustment to price as well. If the wine is firstgrowth, you would add 8.129e-1 units to price, if it is a cultwine, you would add 1.286 units to price, and if it is from pomerol, you would add 5.115e-1 units to the price. 
+
+## Problem 4B: 
+### Identify the Unusually highly priced wines and the Unusually lowly priced wines based on your final model. 
+```{r}
+#std.error <- rstandard(mfin)
+high <- which(rstandard(mfin) >= 2)
+low <- which(rstandard(mfin) <= -2)
+cat("Unusually High Priced:\n")
+data[c(41,58,67),]
+cat("Unusually Low Priced:\n")
+data[61,]
+```
+
+#### By using log transformation on price instead of -0.4, these answers of outliers are way more intuitive. Before I was getting the opposite, so smaller prices were seen as unusally high prices and vice versa. 
+
+## Problem 4D: 
+### Identify the wines that can be considered good leverage points in your final MLR.
+```{r}
+leverage <- hatvalues(mfin) ##h_ii > 2 * (p + 1) / n 
+which(leverage >= 2 * (5+1)/length(Price) & abs(rstandard(mfin)) < 2)
+```
+
+#### These are good leverage because they have hii scores greater than the threshold, but are not outliers. 
