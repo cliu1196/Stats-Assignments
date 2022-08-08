@@ -1,0 +1,440 @@
+---
+title: "Homework 6 - PCA"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Homework questions and text copyright Miles Chen. For personal use only. Do not distribute. Do not post or share your solutions.
+
+# Homework 6 Requirements
+
+There is no separate instruction file. This file is the instructions and you will modify it for your submission.
+
+You will submit two files.
+
+The files you submit will be:
+
+1. `102b_hw6_output_First_Last.Rmd` Take this R Markdown file and make the necessary edits so that it generates the requested output.
+
+2. `102b_hw6_output_First_Last.pdf` OR  `102b_hw_6_output_First_Last.html` Your output file. This can be a PDF or an HTML file. This is the primary file that will be graded. **Make sure all requested output is visible in the output file.**
+
+Failure to submit all files will result in an automatic 40 point penalty.
+
+## Academic Integrity
+
+Modifying the following statement with your name.
+
+"By including this statement, I, Charles Liu, declare that all of the work in this assignment is my own original work. At no time did I look at the code of other students nor did I search for code solutions online. I understand that plagiarism on any single part of this assignment will result in a 0 for the entire assignment and that I will be referred to the dean of students."
+
+If you collaborated verbally with other students, please also include the following line to credit them.
+
+"I did discuss ideas related to the homework with Josephine Bruin for parts 2 and 3, with John Wooden for part 2, and with Gene Block for part 1. At no point did I show another student my code, nor did I look at another student's code."
+Homework questions and text copyright Miles Chen. For personal use only. Do not distribute. Do not post or share your solutions.
+
+\pagebreak
+
+## A brief introduction
+
+[via Wikipedia:] PCA is a statistical procedure that uses an orthogonal transformation to convert a set of observations of many (correlated) variables into a set of linearly uncorrelated variables called principal components.
+
+The number of principal components is less than or equal to the number of original variables. This transformation is defined in such a way that the first principal component has the largest possible variance (that is, accounts for as much of the variability in the data as possible). Each succeeding component in turn has the highest variance possible under the constraint that it is orthogonal to the preceding components. The resulting vectors are an uncorrelated orthogonal basis set. 
+
+PCA is mostly used as a tool in exploratory data analysis and for making predictive models. PCA can be done by eigenvalue decomposition of a data covariance (or correlation) matrix or singular value decomposition of a data matrix, usually after mean centering (and normalizing or using Z-scores) the data matrix for each attribute.
+
+## Why bother with PCA?
+
+By doing PCA, there are a few benefits that you gain:
+
+1) A simplified covariance matrix. The covariance matrix of your data expressed in terms of the principal components will be a diagonal matrix. 
+2) The ability to reduce the dimensionality of your data with a minimal loss of actual information.
+3) The ability to identify some interesting structure in the data. PCA highlights the differences and similarities between observations.
+
+# Our first PCA example
+
+For our first PCA example, we will begin by looking at some toy two-dimensional data. We will use the package `mvtnorm` to generate some random data where x1 and x2. We provide it the matrix sigma, the covariance matrix of our random data. We also provide it the mean of $X1$ ($\mu_{X1} = 20$) and the mean of $X2$ ($\mu_{X1} = 40$).
+
+```{r, fig.width=5, fig.height=5, error = TRUE}
+#install.packages(mvtnorm)  # multivariate normal distribution package
+library(mvtnorm)
+library(ggplot2)
+set.seed(9)
+sig <- matrix(c(9, 5, 5, 4), nrow = 2)
+x <- rmvnorm(200, sigma = sig, mean = c(20,40))
+head(x)
+cor(x)
+cov(x)
+p <- ggplot(as.data.frame(x), aes(x = V1, y = V2)) + geom_point() + 
+    xlim(10, 30) + ylim(30,50)
+print(p)
+```
+
+When we plot the data, we can see that the data are positively correlated.
+
+Two-dimensional data has been studied quite thoroughly, and is well understood, so it may seem silly to perform principal component analysis on two-dimensional data. However, we will still proceed to illustrate what PCA does.
+
+## The PCA Methods
+
+PCA can be performed in a few ways: 
+
+1) find the covariance matrix and do eigendecomposition (also called spectral decomposition)
+2) find the correlation matrix and do eigendecomposition
+3) perform singular value decomposition directly on the data matrix
+
+Before performing these decompositions, however, we must first center our data. This is achieved by subtracting the column means from each column in the data.
+
+#### Task 1 
+
+_Do that here. Store the column means that you subtract in an object `means`, and store the centered data as `xc`. After centering your data, verify that the column means are 0. (Or at least within machine error of 0.)_
+
+```{r}
+
+```
+
+With centered data, we can see that the covariance matrix is equal to $\frac{1}{n-1}X^TX$.
+
+#### Task 2 
+
+_Verify this by comparing the covariance of `xc` (using function `cov`) and calculating the value of $\frac{1}{n-1}X^TX$._
+
+```{r}
+
+```
+
+# Method 1: PCA with the covariance matrix
+
+To do PCA, we will perform an eigendecomposition of the covariance matrix.
+
+#### Task 3 
+
+_Use the command `eigen` on the covariance matrix of the centered data. Store the results into an object `e`. Store the eigenvectors into matrix `Q`. Print out the eigenvectors and the eigenvalues of e. Verify that you can recreate the covariance matrix with $Q \Lambda Q^T$, where $Q$ is the matrix of eigenvectors and $\Lambda$ is the diagonal matrix containing the eigenvalues down the diagonal._
+
+```{r}
+ 
+```
+
+The eigenvectors of the covariance matrix are the principal directions of X. 
+
+The first principal direction (the first column in the eigenvector matrix $Q$) shows the linear combination of $X1$ and $X2$ that will maximize the variance.
+
+From the seeded generated data, your first principal direction should be `matrix(c(-0.8546442, -0.5192142))`. This means that a new variable, which we will call PC1 is equal to $PC1 = -0.8546442*X1 + -0.5192142*X2$.
+
+I have written some commands which will plot the centered data `xc` as well as some arrows (magnified by a factor of 10) showing the principal directions. 
+
+```{r, fig.width=5, fig.height=5, error = TRUE}
+# if you get an error here, then you probably have not defined xc or e properly
+p <- ggplot(as.data.frame(xc), aes(x = V1, y = V2)) + geom_point() + 
+    xlim(-10, 10) + ylim(-10,10) + 
+    geom_segment(x = 0, y = 0, xend = e$vector[1,1]*10, 
+                 yend = e$vector[2,1]*10, arrow = arrow()) +
+    geom_segment(x = 0, y = 0, xend = e$vector[1,2]*10, 
+                 yend = e$vector[2,2]*10, arrow = arrow()) 
+print(p)
+```
+
+Now that we have determined the principal directions, we can use them to transform our data. 
+
+#### Task 4 
+
+_Using matrix multiplication, multiply the data matrix with the matrix of eigenvectors and store the result in `pc`. The resulting matrix, is the data expressed in its principal components. Something to the effect of `pc = xc %*% v`, where v is the matrix of eigen vectors. Create a plot of the data expressed in principal components._
+
+```{r, fig.width=5, fig.height=5, error = TRUE}
+
+```
+
+You can see that PCA is a rotation of the data. The result is that the PC1-axis is now the direction of maximum variation.
+
+#### Task 5 
+
+_Also calculate the covariance and correlation of the data expressed in its principal components. You should see that the off diagonal elements are (within machine error of) 0._
+
+```{r}
+ 
+```
+
+Using both components of PCA to re-express two-dimensional data is a bit silly. We do get the benefit of having a diagonal covariance matrix. But our data is still expressed in two dimensions.
+
+### Dimension reduction and recreation of the data
+
+Now that PC1 is the direction that captures the most variation, we can completely eliminate PC2. This reduces our data to just a one-dimensional dataset. Why? Dimension reduction is desirable because, in general, lower dimensional data is easier to analyze. Admittedly, reducing 2D data to 1D data feels a bit silly because 2D data is 'easy enough' to analyze as is. But this idea of dimension reduction is still important.
+
+We have multiplied our centered data `xc` by the eigenvectors of the covariance matrix (also called the PCA loadings) to get our data expressed in Principal Components (matrix `pc`).
+
+#### Task 6 
+
+_Delete the second column of the `pc` matrix and store your results as `pc1`. Our data is now one-dimensional. Report some univariate statistics on `pc1` like its mean and sd. Create a normal qq plot of pc1_
+
+```{r}
+
+
+```
+
+After reducing the data to one dimension, we may wish to be able to express our data back in its original form: in two dimensions. After all, the principal components are often combinations of variables and are not easily interpretable on their own.
+
+So how do we reconstruct our 2D data from the 1D reduction? We just undo the PCA transform. The PCA transform involved multiplying our original centered data matrix `xc` by the PCA loadings (the eigenvectors, or the Q matrix). To undo this, we take the resulting PCA data and multiply it by the inverse of the PCA loadings. Luckily, the PCA loadings are orthogonal unit vectors, so their inverse is just their transpose.
+
+#### Task 7 
+
+_Multiply `pc1` by the transpose of the of the first PCA loading. The result should be a matrix with 2 columns and 200 rows. Add the column means (from our centering operation) back into the data. Store your reconstructed results as `xrec`. Plot the reconstructed data._
+
+```{r, fig.width=5, fig.height=5, error = TRUE}
+# ... write your code to produce xrec
+
+p <- ggplot(as.data.frame(xrec), aes(x = V1, y = V2)) + geom_point() + 
+    xlim(10, 30) + ylim(30,50)
+plot(p)
+```
+
+The reconstructed data shows that we have rotated back the one-dimensional data. By looking at the reconstructed data, it is clear that we have lost some information. This is expected, as we have used only one variable to store all of the information. Comparing this plot to the original plot, we can see that while information has been lost, the overall structure in our data still exists.
+
+# PCA Method 2: PCA with the correlation matrix
+
+We can perform PCA on the correlation matrix (of the centered data) instead of the covariance matrix.
+
+#### Task 8 
+
+_Create the correlation matrix of the centered data `xc`, store this as `r`. Find and report the eigenvectors of `r`. Store the eigenvectors of `r` as the matrix `Qr`._
+
+```{r}
+
+```
+
+These vectors are different from the vectors produced when doing PCA on the covariance matrix.
+
+What's the difference?
+
+Think of the relationship between covariance and correlation. Using the correlation matrix effectively centers and scales the columns to be z-scores. We can see this by scaling the data in the x matrix ourselves. (By definition) the correlation matrix is equivalent to the covariance matrix of this scaled data.
+
+Observe the following plots. The first is the original data. We can see that there is more variance in the horizontal direction than in the vertical direction. The second plot uses the scaled data, which is stored as `xcs`. Both directions now exhibit the same amount of variation.
+
+```{r, fig.width=5, fig.height=5, error = TRUE }
+p <- ggplot(as.data.frame(x), aes(x = V1, y = V2)) + geom_point() + 
+    xlim(10, 30) + ylim(30,50)
+print(p)
+
+xcs <- scale(x) #xcs is the centered and scaled version of x. 
+p <- ggplot(as.data.frame(xcs), aes(x = V1, y = V2)) + geom_point() + 
+    xlim(-5, 5) + ylim(-5 ,5)
+print(p)
+```
+
+Thus the PCA analysis of the correlation matrix places the different variables on 'equal footing.' If in the data, one variable has a very high variance, performing PCA on the covariance matrix will almost certainly produce an eigen vector with a high loading on that variable.
+
+The choice of whether to use the covariance or correlation matrix is up to data analyst. In general, use the covariance matrix when the variable scales are similar and the correlation matrix when variables are on different scales. Please read the discussions on the subject at: http://stats.stackexchange.com/questions/53/pca-on-correlation-or-covariance and at http://stats.stackexchange.com/questions/62677/pca-on-correlation-or-covariance-does-pca-on-correlation-ever-make-sense
+
+#### Task 9 
+
+_Express the data in its principal components. This time you will multiply the scaled data matrix `xcs` with the eigenvector matrix to get your data expressed in principal components. Create a plot of the data expressed in its principal components._
+
+```{r, fig.width=5, fig.height=5, error = TRUE}
+
+```
+
+#### Task 10 
+
+_Calculate the covariance and correlation of the scaled data expressed in its principal components. Compare this to the covariance and correlation of the non-scaled data expressed in principal components (from task 5). How do they compare?_
+
+```{r}
+
+```
+
+We'll skip this step, but reconstruction of the original data using the principal components is done the same way as it was in Task 7. The difference here is that you may want to 'rescale' your data back to its original form and then add the column means.
+
+# PCA Method 3: PCA with Singular Value Decomposition
+
+### Singular Value Decomposition
+
+Singular Value Decomposition is similar to eigendecomposition. A key difference is that eigendecomposition can only be performed on square matrices, but SVD can be performed on rectangular matrices. 
+
+Singular value decomposition breaks a matrix into three parts: $X = U \Sigma V^T$. We'll use our $X$ matrix, which has 200 rows and 2 columns.
+
+$U$ is a 200 by 200 matrix. $\Sigma$ is a 200 by 2 matrix. $V$ is a 2 by 2 matrix.
+
+$U$ are the eigenvectors of the matrix $XX^T$. Because $XX^T$ is a 200 by 200 matrix, there are 200 eigenvectors, and $U$ is a 200 by 200 matrix.
+
+$V$ are the eigenvectors of the matrix $X^TX$. This time $X^TX$ is a 2 by 2 matrix, there are only 2 eigenvectors.
+
+$\Sigma$ is a diagonal matrix, where the diagonal entries are the square roots of the eigenvalues that are shared between U and V. So we have 2 eigenvalues. It's not a square matrix, and values not on the primary diagonal is 0.
+
+### R does Thin SVD
+
+R defaults to performing a Thin SVD, rather than the full SVD. In this case, our $X$ matrix which has 200 rows and 2 columns is still broken into three parts, but with different dimensions.
+
+$U$ is a 200 by 2 matrix. $\Sigma$ is a 2 by 2 matrix. $V$ is a 2 by 2 matrix.
+
+In this case, $U$ will be the first two eigenvectors of the matrix $XX^T$. 
+
+$V$ is the same as before. It is the eigenvectors of the matrix $X^TX$, which is a 2 by 2 matrix.
+
+$\Sigma$ is a diagonal matrix, where the diagonal entries are the square roots of the eigenvalues that are shared between U and V. Now that we have reduced $U$ to two columns, $\Sigma$ is a 2 by 2 matrix.
+
+#### Task 11 
+
+_Use R to perform a (Thin) Singular Value Decompostion of the centered data matrix `xc`. Save each part as `U`, `S`, and `V`. The eigenvalues are stored as a vector, so you'll need to turn them into a diagonal matrix. Verify that $USV^T$ does equal `xc` (up to machine error). You can (should) use the function all.equal for this step._
+
+```{r}
+
+```
+
+### SVD for PCA
+
+When you perform Singular Value Decomposition on the centered data matrix, you are essentially performing Principal Component Analysis.
+
+The resulting matrix $V$ from SVD is the same as the $Q$ matrix when performing eigendecomposition on the covariance matrix. How is that possible? Recall, that after centering the data, the covariance matrix is $X^TX$. The eigen decomposition found the eigenvectors of this covariance matrix. With SVD, $V$ is the eigenvectors of $X^TX$. That is why they are equal, and that is why SVD is essentially the same as PCA (using the covariance matrix).
+
+#### Task 12
+
+_Verify that what I wrote is true. Check the value of $V$ and check the value of $Q$. The signs are arbitrary, so one matrix might be the negative of the other._
+
+```{r}
+
+```
+    
+# Using R's built in `prcomp()` functions
+
+R has two principal components functions built-in. So far we have done PCA by combining the use of more elementary functions like `cov()`, `cor()` and `eigen()`. `prcomp()` does PCA via SVD. 
+
+### Convenience
+
+When using R's built in function, we don't have to worry about centering the data matrix. The results also have a few convenient methods associated with it.
+
+#### Task 13
+
+_Use the function `prcomp()` on the **original data** matrix `x`. Store the results in `pcresults`. Print out `pcresults` and `summary(pcresults)`. Check to see that the rotation matrix matches the results from Task 3. Use `biplot` to create a plot. (This dataset has too many observations for us to see the individual obserations.)_
+
+```{r}
+
+
+```
+
+
+### PCA with the correlation matrix
+
+To perform PCA of the correlation matrix using `prcomp()`, simply add the option, `scale = TRUE`
+
+#### Task 14
+
+_Use `prcomp()` on the original data matrix `x` using the correlation matrix. Store the results in `pcresults2`. Print out `pcresults2` and `summary(pcresults2)`. Verify that the rotation matrix is equivalent to the Qr matrix from Task 8._
+
+```{r}
+
+
+```
+
+
+# PCA on Real data
+
+We will now explore the use of PCA in a real-life setting. The data we will be looking at is spectroscopic data. We will be using data from the package `ChemoSpec` which contains functions for chemical-spectroscopy analysis. The data we will use `SrE.IR`. It is a collection of 14 IR spectra of of 14 retail samples of essential oil extracted from the palm Serenoa repens or Saw Palmetto. There are two additional spectra included as references/outliers: evening primrose oil, labeled EPO in the data set, and olive oil, labeled OO.
+
+A basic IR spectrum is essentially a graph of infrared light absorbance on the vertical axis vs. wavelength on the horizontal axis. Typical units of frequency used in IR spectra are reciprocal centimeters (sometimes called wave numbers), with the symbol $cm^{-1}$.
+
+If you are interested in chemical spectroscopy, I recommend reading the vignette on the package, available at https://cran.r-project.org/web/packages/ChemoSpec/vignettes/ChemoSpec.pdf
+
+Performing PCA on this data will allow us to find the similarities and differences between the IR spectra of the different samples of Oil.
+
+```{r, error = TRUE}
+# install.packages("ChemoSpec")
+library(ChemoSpec)
+data(SrE.IR)
+sumSpectra(SrE.IR)
+plotSpectra(SrE.IR, which = 2)
+plotSpectra(SrE.IR, which = 3)
+plotSpectra(SrE.IR, which = 16)
+```
+
+```{r, fig.width=8, fig.height=12, error = TRUE}
+plotSpectra(SrE.IR, which = 1:16, offset = .3, yrange = c(0,5))
+```
+
+The first three plots show individual spectra, and this latest plot shows all 16 spectra plotted together (offset by 0.3). Looking at this last plot, we can see they all have a fairly similar shape with small difference between them. We also see that the two spectra labeled `OO` and `EPO` indeed are different from the others.
+
+Let's take a look at how our data is stored:
+
+```{r, error = TRUE}
+str(SrE.IR)
+```
+
+We can see that the data is stored in `$data` as a 16 by 1868 matrix. Each row represents a oil sample. Each column is an IR frequency and the value in that column represents the absorbancy. Each oil sample, thus has 1868 measurements associated with it, so our data effectively has a dimensionality of 1868.
+
+The package `ChemoSpec` has its own PCA functions built it. However, for the sake of pedagogy, we will perform PCA with the more rudimentary functions of R. This will allow us to see how PCA works on our data.
+
+
+#### Task 15
+
+_We begin by creating a copy of the `SrE.IR` data, which we will call `srecopy`. Store `srecopy$data` as `sredat`, so we can perform some operations on it. Center the sredat matrix, and store the centering values. Perform a SVD on `sredat` and store the results `sreusv`._
+
+```{r}
+
+```
+
+We first begin by plotting the column means, which were subtracted from our original data matrix to center it. We'll extract the frequencies from our SrE data copy.
+
+```{r, error = TRUE}
+frequency <- srecopy$freq
+plot(frequency, centering, type="l")
+```
+
+The V matrix from our SVD will contain our principal directions. Let's take a look. 
+
+```{r, error = TRUE}
+str(sreusv)
+```
+
+We have 16 columns, and 16 principal directions. We can try plotting the first principal direction.
+
+```{r, error = TRUE}
+plot(frequency, sreusv$v[,1], typ = "l")
+```
+
+This looks strange. But let's explore further.
+
+Go back and look at the spectra for `ET_pSrE` and for `GNC_adSrE`. Notice the small differences between the curves, especially around wavenumber 1700.
+
+`ET_pSrE` is the second sample. We can sort-of reconstruct the original curve using just the first principal component. We will do this manually. We look at the second row in the U matrix. This gives us the 'recipe' to recreate the second sample using the principal directions. We will just use the first principal direction.
+
+```{r, error = TRUE}
+sreusv$u[2,]
+```
+
+We'll use the first diagonal element is S. We will multiply this together with the first principal direction and add the centering information back in to recreate our second curve.
+
+```{r, error = TRUE}
+sreusv$u[2,1]
+sreusv$d[1]
+et_psrecurve <- sreusv$u[2,1]*sreusv$d[1]* sreusv$v[,1] + centering
+plot(frequency, et_psrecurve, type="l")
+```
+
+compare this to the original data
+
+```{r, error = TRUE}
+plot(frequency, SrE.IR$data[2,], type="l")
+```
+
+We can see that the two curves are quite similar, though the curve reconstructed from the principal component loses a bit of information. But overall, it seems to represent the curve quite well.
+
+#### Task 16
+
+_Now it's your turn. Manually reconstruct the curve for `GNC_adSrE` (the third sample) based on the first principal direction. Plot the resulting curve. Also plot the actual curve from the data for that sample._
+
+```{r, error = TRUE}
+
+```
+
+Again we see that just by using the first component, we get a pretty good recreation of the curve.
+
+Take a look at the coefficients associated with the principal directions. Both the ET and GNC curves have opposite signs for the second principal direction.
+
+Effectively, the first principal direction captures the maximum amount of variation in our data. The principal direction starts to highlight some of the key differences from curve to curve. 
+
+The 'recipe' for the ET curve says to add a negative version of the first principal direction, while the 'recipe' for the GNC curve says we should add a positive version of this curve. By studying and understanding this principal direction, we might be able to understand some of the differences between our samples.
+
+## A note about the amount of variation captured by the principal components
+
+If you use all of the principal components, you will retain the full amount of variation that exists in the data. If you decide to truncate your data, you will lose some of this information.
+
+To see how much of the original variation can be recreated with the principal components, you can look at the eigenvalues. The sum of all the eigenvalues represents the total amount of variation that exists in the matrix. Let's say you have 4 principal components, and that the eigenvalues are: 24, 3, 2, 1. In this case the total variation that exists is the sum, 30. The first principal component accounts for 24/30 = 80% of the variation. Adding the second principal component will account for an additional 3/30 = 10% of the variation.
+
+When performing SVD, the diagonal elements of the $\Sigma$ matrix are the squareroots of the eigenvalues. The above method to see how much of the variation is accounted for still works, but you must first square the diagonal elements.
+
+### You are done!
