@@ -1,0 +1,264 @@
+---
+title: "HW4 - Intro to MCMC"
+author: "Your Name Here"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Homework Questions, copyright Miles Chen. Do not post or distribute without permission.
+
+**Do not post your solutions online on a site like github. Violations will be reported to the Dean of Students.**
+
+Modify this file with your answers and responses.
+
+## Academic Integrity Statement
+
+By including this statement, I, **Joe Bruin**, declare that all of the work in this assignment is my own original work. At no time did I look at the code of other students nor did I search for code solutions online. I understand that plagiarism on any single part of this assignment will result in a 0 for the entire assignment and that I will be referred to the dean of students.
+
+I did discuss ideas related to the homework with Josephine Bruin for parts 2 and 3, with John Wooden for part 2, and with Gene Block for part 5. At no point did I show another student my code, nor did I look at another student's code.
+
+
+# Reading:
+
+Reading is important!
+
+Doing Bayesian Data Analysis Textbook is available at: <https://www.sciencedirect.com/science/book/9780124058880>
+
+- Read chapter 7 of Doing Bayesian Data Analysis
+- <http://setosa.io/ev/markov-chains/>
+- <http://setosa.io/ev/eigenvectors-and-eigenvalues/> Especially the section on steady states (stationary distributions)
+
+
+## Problem 1 - Transition Matrix and Stationary Distribution (Two state case)
+
+Imagine a two-state Markov chain. With state 1 representing CA and state 2 representing TX.
+
+Let's pretend that each year, 9% of Californians move to TX and that 12% of Texans move to CA.
+
+Create and display a 2x2 transition matrix $\mathbb{P}$ in R to represent the transition probabilities.
+
+Using algebra, find the stationary distribution $\boldsymbol{\pi}$, so that $\boldsymbol{\pi}\mathbb{P} = \boldsymbol{\pi}$.
+
+```{r}
+# write your code here
+# P <- rbind(...)
+# w <- ... 
+
+
+```
+
+Find the left eigenvector of $\mathbb{P}$ and normalize it (so it sums to 1). Does it match the stationary distribution you found?
+
+```{r}
+
+```
+
+
+## Problem 2 - Transition Matrix and Stationary Distribution (island example)
+
+Look at the example with the politician visiting the island chain in chapter 7 of the textbook, Doing Bayesian Data Analysis. Also see Lecture 5-3.
+
+Imagine another chain of 7 islands where the target distribution is equal to the probabilities of a binomial distribution with n = 6 and p = 0.6.
+
+This 'nation' has 7 islands in a chain numbered from 0 to 6. Island 0 has prob = $\binom{6}{0}(.6)^0(.4)^6$ = `dbinom(0, 6, 0.6)`, Island 1 has prob = $\binom{6}{1}(.6)^1(.4)^5$ = `dbinom(1, 6, 0.6)`, Island 6 has prob = `dbinom(6, 6, 0.6)`, etc.
+
+Use the same algorithm as the politician to figure out the transition probabilities. Create and print out the full 7 x 7 transition matrix $\mathbb{P}$. Populate the matrix with actual decimal values, and not symbols (round to 4 decimal places for display purposes).
+
+Start with the initial distribution: $\boldsymbol{\pi}^{(1)}$ = c(0, 0, 0, 1, 0, 0, 0)
+
+Multiply $\boldsymbol{\pi}^{(n)}$ by $\mathbb{P}$ 6 times and print the results after each iteration. (Print the distribution of $\boldsymbol{\pi}^{(2)}$, $\boldsymbol{\pi}^{(3)}$, ... $\boldsymbol{\pi}^{(7)}$)
+
+Find the stationary distribution of the chain by finding the left eigenvector of the transition matrix and normalizing it. Check (using `all.equal()`) to see if it is equal to the target distribution (a binomial distribution with $n = 6$ and $p = 0.6$)
+
+
+```{r, error = TRUE}
+# P <- matrix(c(...))
+pi_1 = c(0, 0, 0, 1, 0, 0, 0)
+```
+
+Multiply $\boldsymbol{\pi}^{(1)}$ by $\mathbb{P}$ 500 times to get $\boldsymbol{\pi}^{(501)}$. Show the results after the final iteration. Do NOT show the steps in between. Did the distribution converge to the stationary distribution?
+
+## Problem 3 - MCMC (Metropolis Algorithm) for the island hopping
+
+Write code to create a Markov chain using the Metropolis Algorithm for the same island nation in problem 2.
+
+```{r}
+# write a function that returns the probability of the target distribution
+target <- function(x){ 
+  
+}
+
+# write a function that proposes a new value of x given the current value of x
+propose <- function(x) { 
+  
+}
+
+results <- rep(NA, 10^5)
+## implement the metropolis algorithm
+
+```
+
+Run the Metropolis Algorithm to create two Markov chains, each of length 10^5. For the first chain, start at x = 0 and use `set.seed(1)`. For the second, start at x = 6 and use `set.seed(2)`.
+
+For each completed chain, print out a table of the resulting relative frequencies. Make a side-by-side barchart that shows the empirical PMF of your data and the theoretic PMF according to the binomial distribution. Use a chi-squared goodness-of-fit test to see if the generated values fit the expected probabilities. Be sure to comment on the graph and results of the test.
+
+
+## Problem 4 - MCMC (Metropolis Algorithm) for a single continuous random variable
+
+The logisitic distribution is a unimodal and symmetric distribution, where the CDF is a logistic curve. The shape is similar to a normal distribution, but has heavier tails (though not as heavy as a Cauchy distribution).
+
+We will compare Rejection Sampling to the Metropolis Algorithm for producing a sample from a distribution.
+
+The PDF is:
+
+$$f(x; \mu, s) = \frac{1}{s} \frac{e^{-(\frac{x-\mu}{s})} }{\left( 1 + e^{-(\frac{x-\mu}{s})} \right)^2}$$
+
+Luckily, this is implemented for us in R with `dlogis()`, which you are allowed to use to calculate the probability density of a (proposed) value.
+
+We will generate two samples drawn from a logistic distribution with mean = 0 and scale = 1.
+
+$$f(x; \mu = 0, s=1) = \frac{e^{-x} }{\left( 1 + e^{-x} \right)^2} = \texttt{dlogis(x)}$$
+
+### Task 4A:
+
+First generate a sample from the logistic distribution using rejection sampling. Propose 10^5 values from a random uniform distribution from -20 to 20. Calculate the necessary constant M, and implement rejection sampling. If you propose 10^5 values, how many values do you end up accepting?
+
+Plot the theoretic CDF of the distribution. Add the empirical CDF of your accepted values to the same plot (in a different color). Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic distributions.
+
+```{r}
+# generate 10^5 proposed x values from the uniform distribution from -20 to +20
+
+
+# calculate the acceptance ratio f(x)/(M * g(x))
+
+
+# generate u values to decide to accept or not
+
+
+# create the sample of accepted values
+
+
+# how many values did you accept?
+
+
+# plot the empirical cdf vs the theoretic cdf. you can use plogis
+```
+
+
+### Task 4B:
+
+Use the Metropolis algorithm to generate values from the logisitic distribution.
+
+For your proposal distribution, use a random uniform distribution that draws a random value between $X_{current} - 1$ and $X_{current} + 1$. 
+
+As a reminder, the steps of the algorithm are as follows:
+
+- Propose a single value from the proposal distribution.
+- Calculate the probability of moving = min(1, P(proposed)/P(current))
+- Draw a random value to decide if you will move or not. If you move, update the current position. If you do not move, keep the current position for another iteration.
+- Repeat.
+
+Start at the terrible location $x^{(1)} = -19$.
+
+Run the Markov Chain for 10,000 iterations. Plot the first 1000 values of the chain and eyeball where you think the chain starts has finished 'burning-in' and is now drawing values from the target distribution. Throw away those initial values.
+
+Plot a density histogram of the remaining values and add the density of the logistic distribution to the histogram.
+
+Plot the theoretic CDF of the distribution. Add the empirical CDF of your values (after removing burn-in) to the same plot. Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic distributions.
+
+
+```{r}
+target <- function(x) {
+  # ...
+}
+
+# write a function that will return a proposed value given the current value
+# the proposed value comes from the uniform distribution with 
+# low = current - 1, to high = current + 1
+propose <- function(x) {
+  # ...
+}
+
+results <- rep(NA, 10^4)
+results[1] <- -19  # we start at a terrible location
+
+# write a loop to perform MCMC
+
+for(i in 1:10^4){
+  current <- results[i]
+  # propose a new value based on the current value
+  
+  
+  # calculate the probability of moving
+  
+  
+  # decide to accept or reject the proposed value
+  
+  
+  # store the appropriate value in results[i]
+  
+}
+
+# create a plot of the first 1000 values in the chain.
+# Eyeball guess where the values seem to have reached a 'good' area. 
+# The 'bad' area values are the burn-in values
+
+
+
+# only keep the values after the 'burn in' period.
+
+
+# Plot a histogram of the remaining values, and add the density
+
+
+# plot the empirical CDF (of the kept values) versus the theoretic CDF
+
+```
+
+
+## Problem 5 - MCMC - the effect of sigma in the proposal distribution
+
+Write code to perform 50,000 iterations of the Metropolis Algorithm for a single continuous random variable.
+
+Let the PDF of the target distribution be:
+
+$$f(x) = c \cdot ( sin(x) + 2 )$$ 
+
+for $0 \le x \le 3 * \pi$, where c is some constant so that $\int_0^{3\pi} f(x) dx = 1$.
+
+For your proposal distribution, use a normal distribution, centered at the current value, with a standard deviation of $\sigma$, which we will adjust in this problem.
+
+Begin your Markov Chain at the location x = 2.
+
+Keep in mind that the probability of a value greater than $3 \pi$ or less than 0 is 0.
+
+Gather 50,000 samples using MCMC **three** different times. 
+
+The first time, use a sigma of 0.1 for the proposal distribution.
+
+The second time, use a sigma of 2.5 for the proposal distribution.
+
+The third time, use a sigma = 20.
+
+Keep track of whether your proposed values are accepted or rejected, and print out the acceptance ratio.
+
+For each MCMC run, print out the acceptance ratio, create a histogram of the sampled values, and plot the first 500 values of the chain `plot(x[1:500], type = "l")`. 
+
+```{r}
+# Write a function for the PDF. Try to make it a vectorized function by using
+# the ifelse() conditional statement rather than if()
+
+f <- function(x) {  
+  ifelse( ... )
+}
+
+
+```
+
+
+

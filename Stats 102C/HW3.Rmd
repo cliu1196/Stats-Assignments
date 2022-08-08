@@ -1,0 +1,242 @@
+---
+title: "Stats 102C, Homework 3"
+output: html_document
+author: Your Name Here
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Homework Questions, copyright Miles Chen. Do not post or distribute without permission.
+
+**Do not post your solutions online on a site like github. Violations will be reported to the Dean of Students.**
+
+Modify this file with your answers and responses.
+
+## Academic Integrity Statement
+
+By including this statement, I, **Joe Bruin**, declare that all of the work in this assignment is my own original work. At no time did I look at the code of other students nor did I search for code solutions online. I understand that plagiarism on any single part of this assignment will result in a 0 for the entire assignment and that I will be referred to the dean of students.
+
+I did discuss ideas related to the homework with Josephine Bruin for parts 2 and 3, with John Wooden for part 2, and with Gene Block for part 5. At no point did I show another student my code, nor did I look at another student's code.
+
+## Reading and Viewing:
+
+- Introducing Monte Carlo Methods with R: Section 2.1, Section 2.2, and Section 2.3
+- Kolmogorov-Smirnov Test on Youtube: <https://www.youtube.com/watch?v=ZO2RmSkXK3c> (This video covers the two-sample test, but we will conduct a one-sample test against a reference distribution)
+
+
+## Problem 1 - Inverse CDF Exponential Distribution
+
+Write a function `my_rexp(n, rate)`, that will generate `n` random values drawn from an exponential distribution with lambda = "rate" by using the inverse CDF method. Use `runif()` as your sole source of randomness.
+
+You are not allowed to use any of the functions `dexp()`, `pexp()`, `qexp()`, or `rexp()` in your generating function. 
+
+Use your function to generate 10,000 random values from an exponential distribution with lambda  = 1. **Do not** print out the 10,000 values.
+
+Plot the theoretic CDF of the distribution. Add the empirical CDF of your data to the same plot (in a different color). You can use R's `pexp()` function when plotting the theoretic CDF.
+
+Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic exponential distribution. Be sure to print out the resulting p-value and comment on the sample produced by your function.
+
+Once you complete the exercise for lambda = 1, repeat the exercise, this time generating 10000 values with lambda = 0.3. Plot the theoretic CDF vs empirical CDF and use the KS test.
+
+```{r}
+my_rexp <- function(n, rate){
+  
+}
+
+
+x <- my_rexp(10^4, rate = 1)
+
+```
+
+
+## Problem 2 - Inverse CDF - Discrete Case
+
+Write a function `my_rbinom(n, size, prob)`, that will generate `n` random values drawn from a binomial distribution with size = `size` and probability of success = `prob` by using the inverse CDF method. Use `runif()` as your sole source of randomness. 
+
+**You must use inverse CDF method. You will not get credit if you use a convolution.**
+
+Do not use any of R's binom functions. Do not use `dbinom`, `pbinom`, `qbinom()`, or `rbinom()`
+
+Use your function `my_rbinom()` to generate 10,000 values from a binomial distribution with n = 6, and p = 0.4.
+
+After generating 10,000 samples, make a side-by-side barchart that shows the empirical PMF of your data and the theoretic PMF according to the binomial distribution. (See lecture 3-2, slides 25 and 26)
+
+Use a chi-squared goodness-of-fit test to see if the generated values fit the expected probabilities. Be sure to comment on the graph and results of the test.
+
+Use your function `my_rbinom()` again. This time generate 10,000 values from a binomial distribution with n = 12, and p = 0.55. Make a side-by-side barchart that shows the empirical PMF of your data and the theoretic PMF according to the binomial distribution. No need to run a chi-squared test for this data.
+
+```{r}
+# write your code here
+my_rbinom <- function(n, size, prob){
+  
+  
+}
+
+
+my_samp <- my_rbinom(10^4, 6, 0.4)
+
+# barplot(...)
+# chisq.test(...)
+
+# my_samp2 <- my_rbinom(10^4, 12, 0.55)
+# barplot(...)
+```
+
+
+
+## Problem 3 - RNG based on inverse CDF and convolutions
+
+Using only `runif()` and/or `rnorm()` as sources of randomness, generate 10,000 ($10^4$) random samples from each of the following distributions. You are not allowed to use any of R's other distribution functions for the generation of random values. **Do NOT** print out the actual values in your random sample.
+
+For each distribution:
+
+- After generating your 10000 samples, plot a density histogram of the resulting sample (`breaks = 30, freq = FALSE`). Plot the theoretic density in another color on top of the histogram. Comment on the plot. You are allowed use R's density functions `dchisq()`, `dt()`, etc. when plotting the density function over the histogram
+- Plot the theoretic CDF of the distribution. Add the empirical CDF of your data to the same plot (in a different color). You can use R's CDF functions `pchisq()`, `pt()`, etc. when plotting the CDF.
+- Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic distributions. Be sure to print out the resulting p-value and comment on the sample produced by your function.
+
+### Problem 3a:
+
+- Beta distribution with shape parameters 4 and 2
+
+### Problem 3b:
+
+- Chi-squared distribution with 4 degrees of freedom
+
+### Problem 3c:
+
+- t-distribution with 4 degrees of freedom
+
+### Problem 3d:
+
+- Gamma distribution with shape parameter 4 and rate parameter 2.
+
+
+## Problem 4 - Rejection Sampling
+
+Let $f(x)$ and $g(x)$ be the target and candidate (proposal) distributions, respectively, in acceptance-rejection sampling.
+
+$f(x) = \frac{1}{2} \sin(x)$ for $0 \le x \le \pi$
+
+$g(x) = \mbox{Unif}(0, \pi)$
+
+Find the optimal constant $M = \max \frac{f(x)}{g(x)}$.
+
+Implement the rejection sampling design, using `runif(n, 0, pi)` as your source of randomness. Generate a sample of at least 10,000 accepted values.
+
+
+```{r}
+
+
+```
+
+
+What is your empirical acceptance rate?
+
+Create a histogram of your generated (accepted) sample `(breaks = 30, freq = FALSE)`. Add the theoretic PDF to the histogram.
+
+Plot the theoretic CDF of the distribution. Add the empirical CDF of your data to the same plot (in a different color). 
+
+Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic distributions. Be sure to print out the resulting p-value and comment on the sample produced by your function.
+
+I have written a vectorized PDF and CDF function for you.
+
+```{r}
+sin_pdf <- function(x) {
+  ifelse(x > 0 & x < pi, 0.5 * sin(x), 0)
+}
+
+sin_cdf <- function(x) {
+  ifelse(x < 0, 0, ifelse(x < pi, 0.5 - 0.5 * cos(x), 1))
+}
+```
+
+
+```{r}
+## your answer
+```
+
+
+## Problem 5 - Rejection Sampling
+
+Use rejection sampling to generate samples from the Beta distribution with shape parameters $a = 4$ and $b = 6$.
+
+The PDF of this Beta distribution is:
+
+$$f(x) = \frac{1}{B(a,b)} x^{a - 1}(1-x)^{b - 1} = 105 x^{3}(1-x)^{5}$$
+
+Use the Uniform (0,1) distribution as your trial distribution.
+
+Use calculus to solve for $M = \max \frac{f(x)}{g(x)}$. Show your work. (The derivative is easy to find and can be easily factored to find the roots.)
+
+Implement the rejection sampling design, using `runif(n)` as your source of randomness. Generate a sample of at least 10,000 accepted values.
+
+
+```{r}
+
+
+```
+
+Use the Kolmogorov-Smirnov test to compare your generated samples to the theoretic distributions. You may use `pbeta` for the CDF. Be sure to print out the resulting p-value and comment on the sample produced by your function. (No additional plots necessary)
+
+## Problem 6 - Empirical Supremum Rejection Sampling
+
+One challenge of rejection sampling is finding the constant $M = \max \frac{f(x)}{g(x)}$. Empirical Supremum rejection sampling estimates the quantity $M$ with a value $\hat c$. The algorithm works much in the same was as rejection sampling, but it continually updates the value $\hat c$ if a new $x$ is produced where $\frac{f(x)}{g(x)}$ is larger than the current estimate $\hat c$.
+
+Read: 6.3.3 Empirical Supremum Rejection Sampling from the following website:
+
+<https://bookdown.org/rdpeng/advstatcomp/rejection-sampling.html#empirical-supremum-rejection-sampling>
+
+(side note: Roger Peng earned his PhD in Statistics from UCLA and hosts the data-science podcast "Not so standard deviations" with Hilary Parker.)
+
+Use Empirical Supremum Rejection Sampling to generate samples from the normal distribution.
+
+The target distribution f(x) will be the positive half of the standard normal distribution, which will have PDF:
+
+$$f(x) = 2 \times \frac{1}{\sqrt{2\pi}} \exp{(-x^2/2)}\mbox{,   for } x \ge 0$$
+
+Use an exponential distribution with lambda = 1 as your trial (proposal) distribution.
+
+$$g(x) = e^{-x} \mbox{,   for } x \ge 0$$
+
+Unlike the example from lecture, DO NOT find the optimal constant M that will maximize the acceptance rates for the rejection sampling design.
+
+Implement Empirical Supremum Rejection Sampling. While the webpage describes a process that looks like it should be implemented with a loop, it is possible to achieve the same result in a more efficient manner without the need for any loops:
+
+- Propose $n = 10000$ values. The accepted sample will be smaller.
+- Use `runif` and inverse CDF to generate $n$ proposal values $X$ from the exponential distribution.
+- Calculate the ratio for all $n$ values: $\frac{f(X)}{g(X)}$
+- Estimate $\hat c$ as the maximum $\frac{f(X)}{g(X)}$ you encounter.
+- Use `runif` to generate $n$ values of $U$ to decide whether to accept or reject the proposed $X$.
+- reject all proposed X values that do not meet the rejection criteria.
+
+Once you have generated samples from the folded normal distribution using rejection sampling, turn the accepted values into values from the standard normal distribution. Use `runif` to generate $S$ to decide the sign of the accepted $X$. The accepted $X$ values will be positive or negative with probably 0.5.
+
+Create a QQ-norm plot of your accepted sample or normally distributed values. Comment on the plot.
+
+Perform a Shapiro-Wilk test `shapiro.test()` to test normality. Comment on the results.
+
+## Problem 7 - Bivariate Normal Distribution
+
+Generate 1000 random observations from a bivariate normal distribution.
+
+$$
+\mathbf{X} \sim \mathcal{N}_2 \left (
+\boldsymbol{\mu}= \left(\begin{array}{c}
+   2 \\
+   -1 \\
+  \end{array}
+  \right),
+  \boldsymbol{\Sigma} = \left( {\begin{array}{cc}
+   3 & -1.5 \\
+   -1.5 & 3 \\
+  \end{array} } \right) \right )
+$$
+
+Implement the Box-Muller transform to generate standard normal values. Use `runif()` as your only source of randomness.
+
+Once you have standard normal values, apply the necessary transform to get the desired bivariate distribution. You may use `chol` to find the Cholesky decomposition of a matrix.
+
+Create a plot the resulting generated data.
+

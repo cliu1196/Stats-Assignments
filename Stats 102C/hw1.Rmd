@@ -1,0 +1,319 @@
+---
+title: "Stats 102C, Homework 1 - Intro to Bayesian Statistics"
+output: html_document
+author: Your Name Here
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Homework Questions, copyright Miles Chen. Do not post or distribute without permission.
+
+**Do not post your solutions online on a site like github. Violations will be reported to the Dean of Students.**
+
+Modify this file with your answers and responses.
+
+## Academic Integrity Statement
+
+By including this statement, I, **Joe Bruin**, declare that all of the work in this assignment is my own original work. At no time did I look at the code of other students nor did I search for code solutions online. I understand that plagiarism on any single part of this assignment will result in a 0 for the entire assignment and that I will be referred to the dean of students.
+
+I did discuss ideas related to the homework with Josephine Bruin for parts 2 and 3, with John Wooden for part 2, and with Gene Block for part 5. At no point did I show another student my code, nor did I look at another student's code.
+
+
+## Reading
+
+Reading is important!
+
+Doing Bayesian Data Analysis Textbook is available at: <https://www.sciencedirect.com/science/book/9780124058880>
+
+- Chapter 2 of Doing Bayesian Data Analysis 
+- Skim Chapter 5 of Doing Bayesian Data Analysis 
+- Chapter 6 of Doing Bayesian Data Analysis 
+- <http://varianceexplained.org/statistics/beta_distribution_and_baseball/>
+- <http://varianceexplained.org/r/credible_intervals_baseball/>
+
+
+# Bayesian Thinking
+
+## Problem 1: 
+
+Doing Bayesian Data Analysis: Exercise 5.1 [Iterative application of Bayes' Rule]
+
+
+
+
+
+## Problem 2: Doing Bayesian Data Analysis: Exercise 5.3 [data-order invariance]
+
+
+
+
+# Modeling the Beta-Binomial Model
+
+In Bayesian inference, we often write the posterior distribution of some parameter $\theta$ based on the data $y$ as follows:
+
+$$P(\theta | y) = \frac{P(y | \theta)P(\theta)}{P(y)}$$
+
+We label $P(y | \theta)$ the *likelihood* of the data given the value of the parameter $\theta$.
+
+$P(\theta)$ represents our *prior* distribution of the possible parameter values of $\theta$.
+
+$P(y)$ is the *marginal* distribution of the observed data $y$. This is generally found by summing or integrating the joint probability of the data $y$ and parameter $\theta$ across all possible values of $\theta$. In many cases, this integral is intractable. The good news is that it is just a constant.
+
+As such, we often say that the posterior distribution is proportional to the numerator.
+
+$$P(\theta | y) \propto P(y | \theta)P(\theta)$$
+
+## Summary of Ch 6 of Doing Bayesian Data Analysis
+
+If the Beta distribution prior has distribution $\text{Beta}(\alpha, \beta)$
+
+And our data has $z$ successes, and $N - z$ failures, the posterior distribution will have distribution:
+
+$$\text{Beta}(z + \alpha, N - z + \beta)$$
+
+Let's further explore the relationship between the prior, the likelihood, and the posterior distributions.
+
+## The beta prior for baseball batting average
+
+Read: <http://varianceexplained.org/statistics/beta_distribution_and_baseball/>
+
+As seen in the blog article, we will model the prior distribution of baseball batters' batting average as $\text{Beta}(81, 219)$. These values have been arbitrarily selected, but were chosen because the author of the article 'felt like' batters generally have a batting average between 0.2 and 0.35.
+
+```{r}
+s <- seq(0.0, 1, by = 0.005)
+plot(s, dbeta(s, 81, 219), type = 'l', ylab = 'density')
+arrows(qbeta(0.025, 81, 219), 0.5, qbeta(0.975, 81, 219), 0.5, col = 'red', code = 3, angle = 90, length = 0.05) # adding an 'arrow' to display a credibility interval at the level y = 0.5
+```
+
+Credibility interval: 
+
+```{r}
+print( c( qbeta(0.025, 81, 219), qbeta(0.975, 81, 219) ) )  # equal tailed Credibility interval
+```
+
+Before seeing any data, my prior distribution tells me that there is a 95% probability that the batter's batting average is between 0.2213 and 0.3216.
+
+## Problem 3
+
+Let's say you observe a player who had 10 at bats and has 4 base hits (batting average = 0.400).
+
+Plot the likelihood of the data for values of p between 0.0 and 1. Use the same vector `s` for the locations.
+
+```{r}
+## your answer
+```
+
+Use the known results for the posterior distribution: $\text{Beta}(z + \alpha, N - z + \beta)$. Plot the posterior distribution of p after considering the data. Use red for the posterior. Also plot the prior distribution in black. You will see just a slight shift between the prior and the posterior.
+
+```{r}
+# your answers
+```
+
+Use `qbeta()` to create a 95% credibility interval based on the posterior distribution.
+
+Use classical statistics to create a 95% confidence interval for p based on the fact that you had 4 successful hits out of 10 trials. (Even though the large sample condition is not met, assume you can use the central limit theorem for the creation of the confidence interval.)
+
+Using the function `arrow()`, add both the credibility interval (in red at the level y = 0.5) and the confidence interval (in blue at the level y = 0.6) to the plot so you can make a visual comparison.
+
+
+## Problem 4a
+
+Let's say you observe a player who had 100 at bats and has 35 base hits (batting average = 0.350). Use a prior distribution of Beta(81, 219).
+
+Plot the posterior distribution of p after considering the data (in red). Also plot the prior (in black). Comment on the difference between the prior and the posterior.
+
+Find a 95% credibility interval based on the posterior. Create a classical 95% confidence interval. Compare the two intervals.
+
+Add both the credibility interval (in red, at y = 0.5) and the confidence interval (in blue, at y = 0.6) to the plot so you can make a visual comparison.
+
+```{r}
+# your answers
+```
+
+## Problem 4b
+
+Let's say you observe a player who had 500 at bats and has 175 base hits (batting average = 0.350).
+
+Plot the posterior distribution of p after considering the data. Also plot the prior (use a prior distribution of Beta(81, 219)). Comment on the difference between the prior and the posterior.
+
+Find a 95% credibility interval based on the posterior. Create a classical 95% confidence interval. Compare the two intervals.
+
+Add both the credibility interval (in red, at y = 0.5) and the confidence interval (in blue, at y = 0.8) to the plot so you can make a visual comparison.
+
+```{r}
+# your answers
+```
+
+
+## Problem 4c
+
+Finally, let's say you observe a player who had 5000 at bats and has 1750 base hits.
+
+Plot the posterior distribution of p after considering the data. Also plot the prior Beta(81, 219).
+
+Add both the credibility interval (in red, at y = 0.5) and the confidence interval (in blue, at y = 1) to the plot so you can make a visual comparison.
+
+```{r}
+# your answers
+```
+
+### As the amount of data increases, how do the results of the Bayesian credibility interval compare to the results of the classical confidence interval?
+
+
+
+
+## Problem 5: Application of Monte Carlo Integration: Bayesian Statistics
+
+In problem 4b, the player's data that we observed was 175 hits out of 500 at-bats. In the problem, you updated the posterior distribution. The posterior distribution is: Beta(256, 544) 
+
+Someone asks, if this player has four at-bats in the next game, what is the probability that the player will get at least one hit?
+
+The answer to this question is 1 - Probability(0 hits in 4 at bats). So we need to find the probability of 0 hits in 4 at bats.
+
+If we knew the value of p, it's easy:
+
+$$P(x = 0) = {4 \choose 0} p^0 (1-p)^4 = (1-p)^4$$
+
+In Bayesian statistics, however, we do not know the value of p. It can be one of the infinite values between 0 and 1. After seeing our data, p is described by the distribution Beta(256, 544).
+
+Thus, the answer to our question will be found by integrating the probability of 0 hits multiplied by the probability of p, considered across every possible value of p.
+
+$$\int_0^1 (1 - p)^4 f(p) dp$$
+
+where f(p) is the pdf of the distribution Beta(256, 544).
+
+Using Monte Carlo Estimation (use n = 50,000), estimate the value of the above integral. (hint: it's already in the form $E_f[h(X)] = \int_\mathcal{X} h(x)f(x) dx$)
+
+You are allowed to use `rbeta()`.
+
+
+
+
+## Problem 6: Bayesian Inference for the rate parameter of the Exponential distribution
+
+
+The gamma distribution has a PDF of the form:
+
+$$f(x; \alpha, \beta) = \frac{\beta^\alpha}{\Gamma(\alpha)}x^{\alpha - 1} e^{-\beta x}$$
+
+It has two shape parameters $\alpha$ and $\beta$. Many distributions (including the exponential and chi-squared distributions) can be written in the form of a gamma distribution. We will take a look at the gamma distribution because it serves as a conjugate-prior for many distributions.
+
+When looking at the PDF of the gamma distribution, you can ignore the scary looking constant in the front $\frac{\beta^\alpha}{\Gamma(\alpha)}$, as its only purpose is to make sure the PDF integrates to 1.
+
+The exponential distribution has the following PDF, defined by the rate parameter $\lambda$.
+
+$$f(x;\lambda) = \lambda e^{-\lambda x}$$
+
+The exponential distribution can be used to model the time between events, such as the time between customers entering a store. The $\lambda$ parameter is the rate (the number of arrivals per time block). Let's say we are trying to model customers entering a store each hour. If $\lambda = 2$, that means the average rate is two arrivals per hour. The expected time between customers is $1/\lambda = 0.5$, meaning the mean time between customers is half an hour.
+
+In this problem, we are trying to model customers entering a small business and will use Bayesian inference to create a distribution for the rate parameter. You talk to the business owner who tells you that sometimes the business gets busy and will see 20 customers in an hour. Other times, it's slow, and maybe only 3 or 4 customers come. But overall, the owner estimates the average is something like 8 customers per hour, give or take a few.
+
+Taking this into account, you decide to use a Gamma distribution with shape parameters $\alpha = 8$ and $\beta = 1$ as the prior distribution for the rate $\lambda$.
+
+```{r}
+s <- seq(0, 30, by = 0.01)
+plot(s, dgamma(s, 8, 1), type = 'l')
+
+```
+
+You decide to collect data by timing how long you wait between customer arrivals.
+
+You gather the following values, measured in fractions of an hour:
+
+```{r}
+y <- c(0.131, 0.078, 0.297, 0.024, 0.016, 0.057, 0.070, 0.148, 0.070, 0.109)
+# after you started the stop watch, the first customer arrived after 7 minutes and 52 seconds (0.131 of an hour)
+# the next customer came 4 minutes and 41 seconds after that (0.078 of an hour). etc. etc.
+# You gathered values for 10 customers total.
+# Conveniently, they add up to exactly one hour!
+```
+
+I have written a simple function `l()` to calculate the likelihood of the data for a given lambda. It simply takes the pdf of each data point and returns the product.
+
+```{r}
+s <- seq(0, 30, by = 0.01)
+l <- function(lambda){
+  y <- c(0.131, 0.078, 0.297, 0.024, 0.016, 0.057, 0.070, 0.148, 0.070, 0.109)
+  prod(lambda * exp(-lambda * y))
+}
+
+res <- rep(NA, length(s))
+for(i in 1:length(s)){
+  res[i] <- l(s[i])
+}
+
+plot(s, res, type = 'l', main = 'likelihood of given data as a function of lambda')
+```
+
+Calculate the likelihood function for lambda mathematically. The total likelihood of the data (which is assumed to be iid) is the product of each point's probability. You can take advantage of the fact that the sum of the y's is 1.
+
+Write down your equation of the likelihood function.
+
+Create a plot of your mathematical likelihood function for values of lambda between 0 and 30. Is it identical to the plot I have provided above?
+
+
+
+Mathematically, find the posterior distribution of lambda given the data.
+
+Hints: We know that the posterior distribution is proportional to the likelihood times the prior. We also know that the gamma distribution is the conjugate prior for the exponential distribution. This means that the posterior distribution of lambda will be a gamma distribution.
+
+$$p(\lambda | y) \propto p(y | \lambda) p(\lambda)$$
+
+Start by multiplying the likelihood by the prior (a gamma distribution). Then, using algebra, rearrange terms so that the posterior is in the form of a gamma distribution with parameters $\alpha$ and $\beta$. If you temporarily ignore the normalizing constant in the gamma distribution, it is in the form $x^{\text{constant1}}e^{\text{-constant2}\cdot x}$
+
+
+Your answer: The posterior distribution of lambda given the data is a gamma distribution with parameters ...
+
+Graph the posterior distribution.
+
+
+
+
+## Problem 7: Bayesian Inference for the mean of a normal distribution
+
+Let's say X comes from a normal distribution with mean $\mu$ and variance $\sigma^2$. The variance $\sigma^2$ is known and is equal to 9. The mean, however, is unknown and has its own probability distribution.
+
+The prior belief for the mean of the population is that $\mu$ comes from a normal distribution with mean $\mu_0$ and variance $\sigma^2_0$. Both $\mu_0$ and $\sigma^2_0$ are given.
+
+$$\mu \sim N(\mu_0, \sigma^2_0)$$
+
+Derive the posterior distribution of $\mu$ given that we have observed a single observation x.
+
+That is:
+
+$$X \sim N(\mu, \sigma^2)$$
+
+$$f(x | \mu) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp{\frac{-(x - \mu)^2}{2 \sigma^2}}$$
+
+Where $\mu$ itself has the pdf:
+
+$$f(\mu) = \frac{1}{\sqrt{2 \pi \sigma_0^2}} \exp{\frac{-(\mu - \mu_0)^2}{2 \sigma_0^2}}$$
+
+To get you started, keep in mind Bayes' Rule. We also remember that $f(x)$ is a constant that exists only to ensure that $f(\mu|x)$ integrates to 1.
+
+$$f(\mu | x) = \frac{\text{likelihood}\times\text{prior}}{\text{marginal}} = \frac{f(x|\mu)f(\mu)}{f(x)} \propto f(x|\mu)f(\mu)$$
+
+Thus:
+
+$$f(\mu | x) \propto f(x|\mu)f(\mu) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp{\frac{-(x - \mu)^2}{2 \sigma^2}} \cdot \frac{1}{\sqrt{2 \pi \sigma_0^2}} \exp{\frac{-(\mu - \mu_0)^2}{2 \sigma_0^2}}$$
+
+Your job: combine and rearrange terms as necessary to get the result to be in the form of the normal PDF.
+
+That is find $\mu_1$ and $\sigma_1$ so that the above product can be expressed as:
+
+$$f(\mu | x) = \frac{1}{\sqrt{2 \pi \sigma_1^2}} \exp{\frac{-(\mu - \mu_1)^2}{2 \sigma_1^2}}$$
+
+Your answer: The posterior distribution of $\mu$ given the data is a normal distribution with parameters ...
+
+
+## Problem 7b: 
+
+Using your result from above, give the posterior distribution for the mean height of adult males in the US.
+
+Prior to seeing any data, it is believed that the mean height of adult males in the US is about 69 inches. We express our prior beliefs by saying $\mu$ random variable that follows a Normal distribution with mean 69 and sd = 0.5.
+
+We randomly select one adult male in the US, and find his height to be 71 inches.
+
+With this observation, what is the posterior distribution of the mean $\mu$?
