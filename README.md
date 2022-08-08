@@ -1,4 +1,4 @@
 # Stats-Assignments
 All assignments from UCLA Stats courses.
 
-View README for more information for what each class is about.
+  1) Stats 21 (Introduction to Python)
