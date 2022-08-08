@@ -1,0 +1,59 @@
+---
+title: "Stat 112 code"
+author: "Pedro De La cueva"
+date: "10/16/2019"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+#review the data and look for missing values
+summary(campusclimate$friendlyenvp)
+
+
+plot(x=campusclimate$friendlyenvp,y=campusclimate$academicenvp)
+#both plot the same thing. They are just two ways to get the columns for the data set
+attach(campusclimate)
+
+plot(x=friendlyenvp,y=academicenvp)
+
+#transforming scores to z scores
+
+#scale() returns the z scores
+cor(x=scale(friendlyenvp,center = T,scale = T),y=scale(academicenvp,center = T,scale = T),use = "complete.obs")
+cor.test(x=friendlyenvp,y=academicenvp)
+
+
+
+
+#finding z scores by creating your own equation
+ata<-na.omit(academicenvp)
+ataz=(ata-mean(ata))/sd(ata)
+#head allows a view of the first couple of columns
+ head(scale(friendlyenvp, center = TRUE, scale = TRUE))
+
+hold=scale(friendlyenvp, center = TRUE, scale = TRUE)
+#another way to access the individual columns in the data set
+campusclimate[,"academicenvp"]
+
+
+
+hold=scale(na.omit(academicenvp), center = TRUE, scale = TRUE)
+head(hold)
+
+#checks how many observations
+length(na.omit(academicenvp))
+```
+
