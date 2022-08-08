@@ -1,0 +1,298 @@
+---
+title: 'Stats141XP Discussion 1: HW 2 (Team 2)'
+author: "Team Members: Charles Liu, Joseph Gallegos, Anshu Mahalley, Jacob Samuels, Jordan Tallman"
+date: "4/18/2021"
+output: pdf_document
+---
+
+# Loading Necessary Packages
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+library(car)
+library(caret)
+library(effects)
+library(sjPlot)
+library(nnet)
+library(dplyr)
+library(caTools)
+library(MASS)
+library(pROC)
+library(ROCR)
+library(mlbench)
+```
+
+
+
+# Loading Necessary Data
+```{r, warning=FALSE, message=FALSE}
+setwd(getwd())
+stem_data <- read_csv("stem.csv")
+d <- read_csv("diabeticsub.csv")
+attach(stem_data)
+```
+
+
+
+# Problem 1
+## Q1.a
+```{r}
+bin_academic <- Academic
+bin_academic[which(Academic < median(na.omit(Academic)))] <- 0
+bin_academic[which(Academic >= median(na.omit(Academic)))] <- 1
+hist(Academic)
+```
+
+
+## Q1.b
+```{r}
+table(Q3.2)
+```
+
+
+## Q1.c
+```{r}
+table(International)
+```
+
+
+## Q1.d
+```{r}
+hist(Belonging)
+```
+
+
+## Q1.e
+```{r}
+Q3.2r <- recode(Q3.2, 'Strongly Agree' = 'Agree','Strongly Disagree'='Disagree')
+Q3.2r <- factor(Q3.2r, levels = c("Agree", "Not Sure", "Disagree"))
+unique(Q3.2r)
+
+m1 <- glm(bin_academic~Q3.2r*International+Transfer*Belonging, family = "binomial")
+summary(m1)
+```
+
+
+## Q1.f
+```{r, warning=FALSE, message=FALSE}
+round(exp(cbind(Estimate=coef(m1), confint(m1))),2)
+```
+
+
+## Q1.g
+**ANSWER:** *Null hypothesis:* The predictors of college preparedness, whether a student is international or not and a student's sense of belonging are not significant in determining a student's satisfaction with academics at UCLA.
+Alternate hypothesis: The predictors of college preparedness, whether a student is international or not and a student's sense of belonging are significant in determining a student's satisfaction with academics at UCLA.
+
+
+## Q1.h
+```{r}
+Transfer <- factor(Transfer)
+bin_academic <- factor(bin_academic)
+plot(allEffects(m1), ask=FALSE)
+```
+
+
+## Q1.i
+```{r}
+plot_model(m1)
+```
+
+**ANSWER:** People who disagreed with Q3.2 (thought high school did not prepare them well) did not have high academic confidence. Transfer and international students didn't seem to have a major difference in their academic confidence. Students with a higher sense of belonging seemed to have a higher overall academic confidence.
+
+
+## Q1.j
+**ANSWER:** The null deviance shows how well the model predicts the response with just the intercept.
+
+
+## Q1.k
+**ANSWER:** The residual deviance shows how well the model predicts the response with the predictors.
+
+
+## Q1.l
+```{r}
+m2 <- glm(bin_academic~1, family = "binomial")
+summary(m2)
+```
+
+
+## Q1.m
+**ANSWER:** In the intercept only model, the null and residual deviance are the same meaning that there are no predictors, since the residual deviance takes the intercept and predictors into account when evaluating the model. The null deviance is different in both models because there are differing degrees of freedom. 
+
+
+## Q1.n
+```{r}
+Ps_r2 <- 1 - 870.32/1138.58
+Ps_r2
+```
+
+
+## Q1.o
+```{r}
+m3 <- multinom(bin_academic~Q3.2r*International+Transfer*Belonging)
+pred <- predict(m3, bin_academic)
+table(pred, bin_academic)
+(269+335)/(269+335+90+128)
+```
+
+
+## Q1.p
+```{r}
+m4 <- glm(bin_academic~Q3.2r*International+Transfer+Belonging, family = "binomial")
+summary(m4)
+
+```
+
+
+## Q1.q
+```{r}
+anova(m1, m4, test = "Chisq")
+```
+
+**ANSWER:** With a p-value of .8408, we can say there is no statistically significant difference between the model with and without the interaction effect with Transfer and Belonging.
+
+
+## Q1.r
+```{r}
+influencePlot(m1)
+```
+
+**ANSWER:** Observation 143, 382, and 169 all have high leverage scores, however their standardized residual isn’t that high, so there are no leverage points to worry about. 
+
+
+## Q1.s
+**ANSWER:** From the plot above and the information above we see that there are three points with high leverage. Because this is a relatively large data set, a high standardized residual would be +4 or -4. Seeing how no points accomplish this, we can say there are no bad leverages that we need to worry about. 
+
+
+## Q1.t
+```{r, warning=FALSE, message=FALSE}
+mmp(m1)
+```
+
+**ANSWER:** The mmps(...) function tells us how accurate our model is with the data. We can see here that the lines are practically on top of each other, indicating that our model matches our data. This shows it is a good analysis of the data.
+
+
+## Q1.u
+**ANSWER:** From the plot above (in Q1.t), we see that the blue and red lines are basically on top of each other and that it creates an S shape. Both of these give us that logistic regression was a good fit for our data. 
+
+
+
+# Problem 2
+## Data Set-up
+```{r}
+# setting up as.factor(...)
+d$Diabetes <- as.factor(d$Diabetes)
+d$FamilyDiabetesHistory <- as.factor(d$FamilyDiabetesHistory)
+```
+
+
+## Q2.1
+```{r}
+m2.1 <- glm(Diabetes ~ 
+               HypertensionDX +
+               Age * FamilyDiabetesHistory,
+             data = d, family = "binomial")
+summary(m2.1)
+
+# Check for Interaction Effect
+# For every increase in Age, we can see there is an increase in likely of having Diabetes. It is similar for people with a family history of diabetes and no history.
+# HOWEVER, this is NOT statistically significant! 
+plot(allEffects(m2.1), ask = FALSE)
+
+# Interpretation of Age
+exp(m2.1$coefficients[3] * 10) # Age every 10 years
+```
+
+**ANSWER:** We can see here that the odds of people with Hypertension (*HypertensionDXYes*) are approximately 20.65% more likely to experience Diabetes. As for Age, we needed to adjust the variable by finding the exponential and multiplying it by 10 (for every 10 years of Age). After the adjustments, we see that the odds of people every 10 years of Age increase will be 36.85% more likely to have Diabetes. The odds of people with a Family History of having Diabetes approximately (*FamilyDiabetesHistoryYes*) is approximately 94.09% more likely to experience Diabetes in their life. Finally, we see that Age and people with a Family History of Diabetes interaction effect is not statistically significant.
+
+
+## Q2.2 
+```{r}
+split <- sample.split(d$Diabetes, SplitRatio = 0.65)
+train <- subset(d, split = TRUE)
+test <- subset(d, split = FALSE)
+p <- predict(m2.1, newdata = test, type = "response")
+summary(p)[3] # using the Median as the threshold of 0.1336525 
+t1 <- table(d$Diabetes, p > summary(p)[3])
+sum(diag(t1))/sum(t1) # accuracy
+```
+
+**ANSWER:** We can see that using the median as threshold, we have an accuracy of approximately 61.43% for our model.
+
+
+## Q2.3
+```{r}
+summary(p)[4] # using the Mean as the threshold of 0.1814435 
+t2 <- table(d$Diabetes, p > summary(p)[4])
+sum(diag(t2))/sum(t2) # accuracy
+```
+
+**ANSWER:** We can see that using the mean as threshold, we have an accuracy of approximately 66.41% for our model. By comparison, we can see that using the mean as the threshold will give us about a 5% higher accuracy than using the median as a threshold.
+
+
+## Q2.4
+```{r}
+pred <- prediction(p, d$Diabetes) # still using 65% as testing
+hist(p) # most fall behind 0.5 on the histogram (potential cut-off)
+eval <- performance(pred, "acc")
+
+# Estimation of the cutoff that creates the maximum accuracy
+max <- which.max(slot(eval, "y.values")[[1]])
+acc <- slot(eval, "y.values")[[1]][max]
+cut <- slot(eval, "x.values")[[1]][max]
+print(c(Accuracy=acc, Cutoff = cut))
+
+# Plot ROC Curve w/ accuracy & cut-off
+plot(eval, main = "ROC Curve")
+abline(h=0.8188581,v=0.5169476)
+
+# Find AUC
+auc <- performance(pred, "auc")
+auc <- unlist(slot(auc,"y.values"))
+auc <- round(auc,2)
+auc
+
+# Plot AUC and ROC Curve
+plot(eval, main="ROC Curve", ylab="Sensitivity", xlab="1-Specificity")
+abline(0,1)
+legend(0.45,0.4,auc,title="AUC",cex=0.8)
+```
+
+**ANSWER:** Using the ROC Curve and plotting it, we can see that the AUC is 75% to our model. We have an accuracy of approximately 81.89% to our model with a cut-off of 51.68%.
+
+
+## Q2.5
+```{r}
+t3 <- table(test$Diabetes,p > 0.5168)
+sum(diag(t3))/sum(t3)  # Accuracy
+```
+
+**ANSWER:** The accuracy for our model based on the cut-off is equal to 81.88 %.
+
+
+## Q2.6
+```{r}
+roc_curve <- performance(pred, "tpr", "fpr")
+plot(roc_curve, colorize = T, main = "ROC Curve")
+abline(0,1)
+```
+
+**ANSWER:** For the plot being shown above, ROC curves show the relationship between sensitivity (true positive rate - tpr) and (1-specificity) or (the false positive rate; fpr).
+
+
+## Q2.7
+```{r}
+fitControl <- trainControl(method = "cv", number = 5, savePredictions = T)
+mod_fitcv <- train(Diabetes ~ HypertensionDX + Age*FamilyDiabetesHistory, data = d, method = "glm", family = "binomial", trControl = fitControl)
+
+summary(mod_fitcv)
+mod_fitcv
+```
+
+**ANSWER:** The accuracy resulting from five-fold cross validation is equal to 81.68% which is less than the cutoff from the ROC curve. 
+
+
+## Q2.8
+```{r}
+confusionMatrix(table((mod_fitcv$pred)$pred,(mod_fitcv$pred)$obs))
+```
+
+**ANSWER:** The sensitivity refers to the percentage of true positives and specificity is the percentage of true negatives. Sensitivity is calculated by dividing number of True Positives by the sum of True positives and False Negatives. Specificity is calculated by dividing the number of True Negatives by the sum of True negatives and false positives. It does better with Sensitivity because we have approximately 99.66% compared to the Specificity of about 0.72%.
