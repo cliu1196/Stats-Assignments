@@ -1,0 +1,119 @@
+---
+title: "Stats 101C HW 8"
+author: "Charles Liu (304804942)"
+date: "12/8/2020"
+output: pdf_document
+---
+
+# Loading Necessary Packages:
+```{r}
+library(ggplot2)
+```
+
+
+
+# Problem 1 (Exercise 10.7.10)
+In this problem, you will generate simulated data, and then perform PCA and K-means clustering on the data.
+
+(a) Generate a simulated data set with 20 observations in each of three classes (i.e. 60 observations total), and 50 variables. Hint: There are a number of functions in R that you can use to generate data. One example is the rnorm() function; runif() is another option. Be sure to add a mean shift to the observations in each class so that there are three distinct classes.
+```{r}
+set.seed(1)
+class_1 <- matrix(rnorm(20*50, mean = 0, sd = 0.1), ncol = 50)
+class_2 <- matrix(rnorm(20*50, mean = 5, sd = 0.1), ncol = 50)
+class_3 <- matrix(rnorm(20*50, mean = 10, sd = 0.1), ncol = 50)
+sim_data <- rbind(class_1, class_2, class_3)
+sim_data <- cbind(sim_data, 
+                  class = as.factor(c( rep(1,20), rep(2,20), rep(3,20) )))
+sim_df <- data.frame(sim_data)
+dim(sim_df) # 60 observations & 50 variables w/ class column 
+head(sim_df)
+```
+
+
+(b) Perform PCA on the 60 observations and plot the first two principal component score vectors. Use a different color to indicate the observations in each of the three classes. If the three classes appear separated in this plot, then continue on to part (c). If not, then return to part (a) and modify the simulation so that there is greater separation between the three classes. Do not continue to part (c) until the three classes show at least some separation in the first two principal component score vectors. 
+```{r}
+PCA_attempt <- prcomp(sim_df)
+summary(PCA_attempt)
+
+# Plot
+PCA_ggplot <- ggplot(data.frame(
+  pca_1 = PCA_attempt$x[,1], 
+  pca_2 = PCA_attempt$x[,2], 
+  classification = sim_df$class), 
+  aes(pca_1, pca_2, col = classification))
+
+
+
+PCA_ggplot + 
+  geom_point() + 
+  labs(title = "PCA Plot (10b)") + 
+  scale_color_gradient(low = "blue", high = "red")
+# There is clear separation between the classes -> move on to part (c)
+```
+
+
+(c) Perform K-means clustering of the observations with K = 3. How well do the clusters that you obtained in K-means clustering compare to the true class labels? Hint: You can use the table() function in R to compare the true class labels to the class labels obtained by clustering. Be careful how you interpret the results: K-means clustering will arbitrarily number the clusters, so you cannot simply check whether the true class labels and clustering labels are the same.
+```{r}
+K <- 3
+set.seed(1)
+k_means <- kmeans(sim_df, centers = K)
+k_means_table <- table(k_means$cluster, c(rep(1,20), rep(2,20), rep(3,20)))
+k_means_table # careful on this interpretation so best to look at the cluster
+k_means$cluster
+```
+
+**COMMENTS:** We can see that the K-means clustering will arbitrarily number the clusters. Therefore, each cluster will be assigned to one class only. From the results, we can see that the K-Means Clustering performed exactly how it should, where each cluster is classified as one class only.
+
+
+(d) Perform K-means clustering with K = 2. Describe your results.
+```{r}
+K <- 2
+set.seed(1)
+k_means <- kmeans(sim_df, centers = K)
+k_means_table <- table(k_means$cluster, c(rep(1,20), rep(2,20), rep(3,20)))
+k_means_table # careful on this interpretation so best to look at the cluster
+k_means$cluster 
+```
+
+**COMMENTS:** We can see here that 2 of the classifications are assigned to 2 clusters. However, we can see that the 3rd classification has to be forced to go into one of the two clusters available because of the 2 classes for the K-Means (K = 2). For this case, the classification 3 went into class 1 K-Means cluster.
+
+
+(e) Now perform K-means clustering with K = 4, and describe your results.
+```{r}
+K <- 4
+set.seed(1)
+k_means <- kmeans(sim_df, centers = K)
+k_means_table <- table(k_means$cluster, c(rep(1,20), rep(2,20), rep(3,20)))
+k_means_table # careful on this interpretation so best to look at the cluster
+k_means$cluster
+```
+
+**COMMENTS:** For this case, the classification 2 gets split between cluster 2 and 4. For classification 1 and 3, they are assigned to their own clusters. We happened to split of the 3 classifications (specifically, classification 2) into one of the 4 clusters.
+
+
+(f) Now perform K-means clustering with K = 3 on the first two principal component score vectors, rather than on the raw data. That is, perform K-means clustering on the 60 × 2 matrix of which the first column is the first principal component score vector, and the second column is the second principal component score vector. Comment on the results.
+```{r}
+K <- 3
+set.seed(1)
+k_means_pca <- kmeans(PCA_attempt$x[, 1:2], centers = K)
+k_means_pca_table <- table(k_means_pca$cluster, 
+                           c(rep(1,20), rep(2,20), rep(3,20)))
+k_means_pca_table # careful on this interpretation so best to look at the cluster
+k_means_pca$cluster
+```
+
+**COMMENTS:** We see that it is a perfect match as part (c). All the classes are given each a single cluster only.
+
+
+(g) Using the scale() function, perform K-means clustering with K = 3 on the data after scaling each variable to have standard deviation one. How do these results compare to those obtained in (b)? Explain.
+```{r}
+K <- 3
+set.seed(1)
+k_means_scaled <- kmeans(scale(sim_df), centers = K)
+k_means_scaled_table <- table(k_means_scaled$cluster, 
+                           c(rep(1,20), rep(2,20), rep(3,20)))
+k_means_scaled_table # careful on this interpretation so best to look at the cluster
+k_means_scaled$cluster
+```
+
+**COMMENTS:** Just like parts (c) and (f), we can see that we get it exactly right again. The results are what we would expect from part (b). Each classification is assigned to a single cluster only.

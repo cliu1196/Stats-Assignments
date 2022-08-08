@@ -1,0 +1,157 @@
+---
+title: "Stats 101C HW 5"
+author: "Charles Liu (304804942)"
+date: "11/17/2020"
+output: pdf_document
+---
+
+# Loading Necessary Packages
+```{r, warning=FALSE, message=FALSE}
+library(ISLR)
+library(tree)
+library(randomForest)
+```
+
+
+
+# Problem 1 (Exercise 8.4.2)
+It is mentioned in Section 8.2.3 that boosting using depth-one trees (or stumps) leads to an additive model: that is, a model of the form
+
+$$f(X) =  \sum\limits_{j=1}^p f_{j}(X_{j})$$
+Explain why this is the case. You can begin with (8.12 shown below) in Algorithm 8.2.
+
+$$\hat{f}(X)=\sum\limits_{b=1}^B \lambda \hat{f}^b(x)$$
+
+**ANSWER:** Let's say we start off with $d=1$ for in algorithm 8.12. Then, we know that for every term will be based off a single predictor. When we sum up all these terms, we find that it'll become an additive model. The reason comes from that when we boost multiple trees, we'll be fitting the residuals from the previous model on each iteration. Then, the models are added together, and the parameter $d$ determines the number of splits. With this, we find the terminal nodes to be $d+1$. 
+
+
+
+
+
+# Problem 2 (Exercise 8.4.5)
+Suppose we produce ten bootstrapped samples from a data set containing red and green classes. We then apply a classification tree to each bootstrapped sample and, for a specific value of X, produce 10 estimates of P(Class is Red|X):
+
+0.1, 0.15, 0.2, 0.2, 0.55, 0.6, 0.6, 0.65, 0.7, and 0.75.
+
+![8.4.5 Figure](C:/Users/cliuk/Documents/UCLA Works/UCLA Fall 2020/Stats 101C/Homeworks/HW 5/8.4.5 Figure.PNG)
+
+There are two common ways to combine these results together into a single class prediction. One is the majority vote approach discussed in this chapter. The second approach is to classify based on the average probability. In this example, what is the final classification under each of these two approaches?
+
+```{r}
+bootstrapped_samples <- c(0.1, 0.15, 0.2, 0.2, 0.55, 
+                          0.6, 0.6, 0.65, 0.7, 0.75)
+
+method_1 <- max(ifelse(bootstrapped_samples <= 0.5, "Green", "Red")) # take majority vote
+
+method_2 <- ifelse(mean(bootstrapped_samples) <= 0.5, "Green", "Red") # take mean probability
+
+
+Q5 <- rbind(method_1, method_2)
+colnames(Q5) <- "Color Results"
+rownames(Q5) <- c("Majority Vote", "Average Probability")
+Q5
+```
+
+**ANSWER:** We can see with the first approach, we have *"Red"* as the Majority Vote because we can clearly see 6 out of the 10 will end up *"Red"*. As for the Average Probability approach, we find the final results to be *"Green"*. 
+
+
+
+
+
+# Problem 3 (Exercise 8.4.8)
+In the lab, a classification tree was applied to the Carseats data set after converting Sales into a qualitative response variable. Now we will seek to predict Sales using regression trees and related approaches, treating the response as a quantitative variable.
+
+(a) Split the data set into a training set and a test set.
+```{r}
+# Load data and set.seed(...) for sampling
+data(Carseats)
+set.seed(1)
+
+# 50% of data for train and 50% of data for test
+train_size <- floor(0.5 * nrow(Carseats))
+train_ind <- sample(seq_len(nrow(Carseats)), size = train_size)
+car_train <- Carseats[train_ind, ]
+car_test <- Carseats[-train_ind, ]
+```
+
+
+(b) Fit a regression tree to the training set. Plot the tree, and interpret the results. What test MSE do you obtain?
+```{r}
+car_tree <- tree(Sales ~ ., data = car_train)
+plot(car_tree)
+text(car_tree, pretty = 0)
+summary(car_tree)
+
+car_pred <- predict(car_tree, car_test)
+MSE_tree <- mean((car_test$Sales - car_pred)^2)
+MSE_tree
+```
+
+**COMMENTS:** We can see that we have a total of 18 terminal nodes using 6 variables. The Residual Mean Deviance is a measure of the error remaining in the tree after construction and is related to the MSE. FOr the MSE results, we have 4.922039. 
+
+
+(c) Use cross-validation in order to determine the optimal level of tree complexity. Does pruning the tree improve the test MSE?
+```{r}
+car_cv <- cv.tree(car_tree)
+plot(car_cv$size ,car_cv$dev ,type="b") # it would seem best would be about 6
+
+car_pruned <- prune.tree(car_tree, best = 6)
+plot(car_pruned)
+text(car_pruned, pretty = 0)
+
+car_pred_pruned <- predict(car_pruned, car_test)
+MSE_tree_pruned <- mean((car_test$Sales - car_pred_pruned)^2)
+MSE_tree_pruned
+```
+
+**ANSWER:** No, pruning does *NOT* improve the MSE for this case. The MSE with pruned is 5.318073.
+
+
+(d) Use the bagging approach in order to analyze this data. What test MSE do you obtain? Use the importance() function to determine which variables are most important.
+```{r}
+p <- dim(Carseats)[2]-1
+car_bag <- randomForest(Sales ~ ., 
+                        data = Carseats,
+                        subset = train_ind,
+                        mtry = p,
+                        importance = TRUE)
+car_bag
+importance(car_bag)
+
+car_pred_bag <- predict(car_bag, car_test)
+MSE_tree_bag <- mean((car_test$Sales - car_pred_bag)^2)
+MSE_tree_bag
+```
+
+**ANSWER:** The MSE obtained from bagging is 2.610255. We can see that CompPrice, ShelveLoc, and Price variables are the most important variables.
+
+
+(e) Use random forests to analyze this data. What test MSE do you obtain? Use the importance() function to determine which variables are most important. Describe the effect of m, the number of variables considered at each split, on the error rate obtained.
+```{r}
+m <- 9
+set.seed(1)
+car_importance_1 <- randomForest(Sales ~ ., 
+                        data = Carseats,
+                        subset = train_ind,
+                        mtry = m-1,
+                        importance = TRUE)
+
+car_importance <- randomForest(Sales ~ ., 
+                        data = Carseats,
+                        subset = train_ind,
+                        mtry = m,
+                        importance = TRUE)
+
+car_pred_importance_1 <- predict(car_importance_1, car_test)
+MSE_tree_importance_1 <- mean((car_test$Sales - car_pred_importance_1)^2)
+MSE_tree_importance_1
+
+
+car_pred_importance <- predict(car_importance, car_test)
+MSE_tree_importance <- mean((car_test$Sales - car_pred_importance)^2)
+MSE_tree_importance
+car_importance
+importance(car_importance)
+```
+
+**ANSWER:** The MSE is 2.625435 for the new importance for $m=9$. We know that $m = \sqrt{p}$, so the number of variables we did at each split was 9. As our $m$ increases closer to 10, we see that we'll have a lower MSE. We see that using $m=8$ offers MSE of 2.647116, which is higher than when $m=9$. Finally, we can conclude that Price and ShelveLoc are truly the most important variables.

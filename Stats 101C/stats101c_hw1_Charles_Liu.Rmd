@@ -1,0 +1,170 @@
+---
+title: "Stats 101C Homework 1"
+author: "Charles Liu (304804942)"
+date: "10/16/2020"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+# Loading Necessary Packages:
+```{r}
+library(MASS)
+```
+
+# *Problem 1 (Exercise 5)* What are the advantages and disadvantages of a very flexible (versus a less flexible) approach for regression or classification? Under what circumstances might a more flexible approach be preferred to a less flexible approach? When might a less flexible approach be preferred?
+
+**ANSWERS BELOW:**  
+
+### Advantages of a very flexible model:  
+
+1. Possibly gives a better fit for non-linear models
+2. Higher flexibility means lower bias
+3. Gives a more complex model, if needed  
+
+### Disadvantages of a very flexible model:  
+
+1. Can cause the training data to be overfit (follows noise too closely)
+2. Higher flexibility means higher variance
+3. It causes the model to estimate a greater number of predictors (not always effectient)  
+
+### "As for less flexible model, it is just the opposite of a very flexible model"  
+
+### Under the circumstances:  
+*A more flexible model approach* would be preferred to a less flexible approach when we are more interested in predicting the results rather than interpreting the results. It's also useful when the model's relationship is non-linear, many data points to locate a pattern from, and when it has a low irreducible error.    
+
+*A less flexible model approach* would be preferred to a more flexible approach when we are more interested in interpreting the results rather than predicting the results. It's also useful when the model's relationship is linear, less data points to locate the linear pattern, and when it has a high irreducible error.
+
+
+
+# *Problem 2 (Exercise 6)* Describe the differences between a parametric and a non-parametric statistical learning approach. What are the advantages of a parametric approach to regression or classification (as opposed to a nonparametric approach)? What are its disadvantages?
+
+**ANSWERS BELOW:**  
+
+### Parametric Approach:  
+1. Assumes a form or shape for *f*
+2. Uses a model-based approach for finding *f*
+3. Estimate *f* down to a single set of parameters needed for the model
+4. Advantages for regression or classification are simplifying the model *f* to a few parameters and not as many observations are needed, compared to non-parametric approach
+5. Disadvantages for regression or classification are inaccuracy if the form/shape of *f* is assume incorrectly and it'll overfit the observations if you use a very flexible model  
+
+### Non-Parametric Approach:  
+1. Does **NOT** make any (or little) assumptions about the form of *f*
+2. Requires more samples to better estimate *f*
+3. Great for fitting non-linear patterns from the model
+4. Advantage for regression or classification is it is better for fitting non-linear models
+5. Disadvantage for regression or classification is it does not offer easy interpretability for the data because little to no assumptions have been made on the model
+
+
+
+# *Problem 3 (Exercise 10)* This exercise involves the Boston housing data set.
+
+## (a) To begin, load in the Boston data set. The Boston data set is part of the MASS library in R.Now the data set is contained in the object Boston. Read about the data set. How many rows are in this data set? How many columns? What do the rows and columns represent?
+```{r}
+attach(Boston)
+dim(Boston)
+names(Boston)
+```
+
+**ANSWER:** There are 506 rows with 14 columns. The rows are the observations, and the columns are the variables (or the predictors).
+
+
+## (b) Make some pairwise scatterplots of the predictors (columns) in this data set. Describe your findings.
+```{r}
+pairs(Boston)
+```
+
+**COMMENTS:** From our findings, we can see a high level of **rad** contained in our **cri** parameter.The **medv** paramater seems to have an inverse relationship between **indus**, **lstat**, and **nox**. We would need to observe further into the data to see why this may be the case. We also see a relationship proportional for **rm** and **medv**.
+
+
+
+## (c) Are any of the predictors associated with per capita crime rate? If so, explain the relationship.
+```{r}
+corr_Boston <- cor(Boston)
+# We want to see the predictos associated with "crim"
+corr_Boston_crim <- corr_Boston[-1, 1]
+corr_Boston_crim
+# We see the ones with the highest correlation with "crim" are: "rad", "tax", lstat", and "nox"
+
+pairs(Boston[, c(1, 5, 9, 10, 13)])
+```
+
+**COMMENTS:** We can see here (both numerically and graphically) that "nox", "rad", "tax" and "lstat" have the highest correlation with "crim" parameter. To also note, "rad" and "tax" has the strongest correlation with "crim", meanwhile "lstat" and "nox" have a medium correlation with "crim". They are all proportionally related with each other.
+
+
+
+## (d) Do any of the suburbs of Boston appear to have particularly high crime rates? Tax rates? Pupil-teacher ratios? Comment on the range of each predictor.
+```{r}
+par(mfrow=c(1,3))
+hist(crim[crim > 1], breaks = 10, main = "Crime Rate")
+hist(tax[tax > 1], breaks = 10, main = "Tax Rates")
+hist(ptratio[ptratio > 1], breaks = 10, main = "Pupil-Teacher Ratios")
+```
+
+**COMMENTS:** We see that for the most part, the cities have lower crime rates. However, there is a long tail that shows 18 suburbs that appears to have a crime rate greater than 20 (frequency). We can see that there is a certain "divide" between the "Tax Rates" for people in suburbs. The divide is between people who have tax rates 600+ and less than 500 rate-wise. We can see the "Pupil-Teacher Ratios" is somewhat skewed to the left, but there is not any particularly high ratios present.
+
+
+
+## (e) How many of the suburbs in this data set bound the Charles river?
+```{r}
+sum(chas == 1)
+```
+
+**ANSWER:** There is a total of 35 suburbs in this data set bound the Charles river.
+
+
+
+## (f) What is the median pupil-teacher ratio among the towns in this data set?
+```{r}
+median(ptratio)
+```
+
+**ANSWER:** The median pupil-teacher ratio among the towns in this data set is 19.05.
+
+
+
+## (g) Which suburb of Boston has lowest median value of owneroccupied homes? What are the values of the other predictors for that suburb, and how do those values compare to the overall ranges for those predictors? Comment on your findings.
+```{r}
+# We see observation "399" has the minimum, but let's observe further.
+which.min(medv)
+summary(Boston)
+
+
+
+# Find the minimum "medv"
+min_medv <- Boston[medv == min(medv), ]
+# Find the range for those predictors
+range_Boston <- sapply(Boston, range)
+
+# Combine it all together and rename the items
+exercise10_g <- rbind(min_medv, range_Boston)
+rownames(exercise10_g) <- c("1st Lowest medv", "2nd Lowest medv", "Minimum", "Maximum")
+exercise10_g
+```
+
+**COMMENTS:** We see that "crim", "indus", "tax", "ptratio", "black", and "lstat" is rather high for theese two suburbs with the lowest "medv". We also noticed that "age" and "rad" are equal to the Maximum amount. These two suburbs are very similar across all the predictors.
+
+
+
+## (h) In this data set, how many of the suburbs average more than seven rooms per dwelling? More than eight rooms per dwelling? Comment on the suburbs that average more than eight rooms per dwelling.
+```{r}
+# Find the amounts
+sum(rm > 7)
+sum(rm > 8)
+
+# Find the range for the "rm" greater than 8 rooms
+range_Boston_eight <- sapply(Boston[rm > 8, ], range)
+# Find the range for those predictors
+range_Boston <- sapply(Boston, range)
+
+# Combine it all together and rename the items
+exercise10_h <- rbind(range_Boston_eight, range_Boston)
+rownames(exercise10_h) <- c("Minimum (greater than 8 Rooms)", "Maximum (greater than 8 Rooms)", "Minimum (Boston Dataset)", "Maximum (Boston Dataset")
+exercise10_h
+```
+
+**ANSWER:** We see there are 64 of the suburbs average more than 7 rooms per dwelling. We also see there are 13 of the suburbs average more than 8 rooms per dwelling.  
+
+**COMMENTS:** From this, we can see that there is a lower "crim" and "lstat" when we compare the ranges. Judging from how small the sample set is, the ranges are relatively similar to the Boston dataset in its entirety. The only major difference we see here is the "black" variable has a far greater Minimum for "greater than 8 Rooms" than the "Boston Dataset".
